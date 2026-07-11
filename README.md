@@ -8,6 +8,3 @@ home-maintenance tracker.
 - `usage.html` — full usage guide, including child-safety warnings
 - `privacy.html` — privacy policy
 - `styles.css` — shared styles (self-contained; no CDNs, no JS)
-
-The previous contents of this repo (the HomeBase React-Native prototype README) are preserved
-in git history.
