@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy — Casa Health</title>
+<meta name="description" content="Casa Health's privacy policy: no account, no server, no analytics, no data collection. Everything stays on your device.">
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8F%A1%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <nav>
+      <a class="brand" href="index.html"><span class="logo">🏡</span>Casa Health</a>
+      <a class="link" href="index.html#model">How it works</a>
+      <a class="link" href="usage.html">Usage guide</a>
+      <a class="link" href="privacy.html" aria-current="page">Privacy</a>
+    </nav>
+  </div>
+  <div class="page-head">
+    <div class="wrap">
+      <h1>Privacy policy</h1>
+      <p>Effective July 11, 2026 · The short version: <strong>there is no account, no server,
+         no analytics, and no data collection.</strong> Everything you enter stays in the
+         app's private storage on your device and leaves only when <em>you</em> export it.</p>
+    </div>
+  </div>
+</header>
+
+<article>
+  <div class="wrap">
+
+    <h2>What the app stores on your device</h2>
+    <p>All of the following lives in a local database in the app's private internal storage
+       (inaccessible to other apps without root). None of it is transmitted anywhere by this
+       app.</p>
+
+    <h3>Your home model</h3>
+    <ul>
+      <li>Home style, floor plan, exterior features (garage, pool, deck, yard), and systems
+          (HVAC, solar).</li>
+      <li>Furniture and vehicle placements, rotations, and positions.</li>
+    </ul>
+
+    <h3>Maintenance hub data</h3>
+    <p>The heart of the app, and the most personal data it holds:</p>
+    <ul>
+      <li>Your home's build year and purchase year (used only as a fallback when estimating an
+          item's age).</li>
+      <li>Per-item install years for appliances, fixtures, structural assets, and vehicles.</li>
+      <li>Task completion dates ("Mark Done" timestamps) used to compute the next seasonal due
+          date and the green/amber/red upkeep status.</li>
+      <li>Which items you've marked "not in my home."</li>
+    </ul>
+
+    <h3>Documents you attach</h3>
+    <p>Warranties, manuals, and receipts are attached through Android's system file picker
+       (Storage Access Framework). The app stores a <em>reference</em> (a persistable URI)
+       plus the display name — it can read only the specific files you picked, and only to
+       display them or include them in a backup you request. It never scans, copies, or
+       requests broad access to your storage.</p>
+
+    <h3>Pro contacts</h3>
+    <p>The Pros tab stores service contacts (name, trade, phone, email, notes) <strong>that
+       you type in yourself</strong>. The app never reads your device's contact book — it has
+       no contacts permission. Remember these entries describe other people; they are included
+       in backups you export, so share those files thoughtfully.</p>
+
+    <h2>What the app never collects</h2>
+    <ul>
+      <li>No analytics, crash reporting, advertising identifiers, or usage tracking of any
+          kind.</li>
+      <li>No account, sign-in, email address, or other personally identifying information is
+          requested.</li>
+      <li>No location, camera, microphone, or contact-book access.</li>
+      <li>No data is transmitted off your device by this app, at any time, for any reason.</li>
+    </ul>
+
+    <h2>Network</h2>
+    <p>The app declares the standard <code>INTERNET</code> permission solely so the system
+       calendar-picker Intent works on all devices. The app itself makes <strong>no network
+       requests</strong>, has no background sync, and sends no push notifications. It is fully
+       functional in airplane mode.</p>
+
+    <h2>Calendar</h2>
+    <p>"Add to calendar" hands the task's title, description, and due date to <strong>your own
+       calendar app</strong> via a standard system Intent. Saving the event is your calendar
+       app's action, under its own account and permissions. Casa Health never reads your
+       calendar and holds no calendar permission.</p>
+
+    <h2>Backups — the only way data leaves the app</h2>
+    <ul>
+      <li><strong>Backup App Data</strong> writes a single <code>.zip</code> — your home
+          database, maintenance records, pro contacts, and attached documents — to a location
+          <em>you</em> choose in the system file picker. The file is <strong>not
+          encrypted</strong> by the app; treat it like any personal file when storing or
+          sharing it.</li>
+      <li><strong>Restore App Data</strong> reads a backup <code>.zip</code> you pick and
+          overwrites current data after an explicit confirmation.</li>
+      <li>Separately, the app allows <strong>Android's own OS backup</strong>
+          (<code>allowBackup</code>), so your device may include the app's data in the device
+          backup tied to your own Google account, under the backup settings and encryption
+          <em>you</em> control in Android — an OS feature, not an app upload.</li>
+    </ul>
+
+    <h2>Children's privacy</h2>
+    <p>Casa Health is intended for adult homeowners and renters managing home maintenance. It
+       is not directed at children, does not knowingly collect personal information from
+       anyone — including children under 13 — and contains no ads, in-app purchases, chat,
+       social features, or any other mechanism that could solicit information from a child.
+       Because the app has no collection or transmission of any kind, there is no child data
+       to collect, sell, or share.</p>
+    <div class="callout warn">
+      Physical safety matters more here than data: many maintenance tasks the app reminds you
+      about (garage doors, pool chemicals, power tools, vehicle fluids) are hazardous to
+      children. See the <a href="usage.html#child-safety">child-safety warnings</a> in the
+      usage guide — the adult performing a task is responsible for keeping the work area
+      child-safe before, during, and after it.
+    </div>
+
+    <h2>Deleting your data</h2>
+    <p>Uninstalling the app (or clearing its storage in Android settings) permanently deletes
+       the local database and all maintenance records. Backup <code>.zip</code> files you
+       exported remain wherever you saved them — delete those yourself if you no longer want
+       them. Attached original documents are your files and are never touched by
+       uninstalling.</p>
+
+    <h2>Changes to this policy</h2>
+    <p>If a future version ever changes what is stored or introduces any network feature, this
+       policy will be updated here before that version ships, with the effective date above
+       revised.</p>
+
+  </div>
+</article>
+
+<footer>
+  <div class="wrap">
+    <span>Casa Health · offline home maintenance for Android</span>
+    <span class="spacer"></span>
+    <a href="usage.html">Usage guide</a>
+    <a href="privacy.html">Privacy policy</a>
+  </div>
+</footer>
+
+</body>
+</html>
