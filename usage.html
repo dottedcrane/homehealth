@@ -33,10 +33,10 @@
 
     <h2>1. Getting started</h2>
     <p>The app opens on a <strong>3D neighborhood</strong> — your own buildable lot plus five
-       model homes around a cul-de-sac. Tap any home to preview its exterior and floor plan,
-       then press <strong>Mine</strong> to claim it (or claim your own lot and build from
-       scratch). You'll be asked for the <strong>year built</strong> and <strong>year
-       purchased</strong>.</p>
+       model homes around a cul-de-sac (The Classic, The Estate, The Townhouse, The Ranch, and
+       The Penthouse condo tower). Tap any home to preview its exterior and floor plan, then
+       press <strong>Mine</strong> to claim it (or claim your own lot and build from scratch).
+       You'll be asked for the <strong>year built</strong> and <strong>year purchased</strong>.</p>
     <div class="callout">
       <strong>Enter those dates honestly.</strong> Every lifespan rating falls back to the
       build year when an item has no install year of its own — one accurate date instantly
@@ -142,12 +142,16 @@
           to cycle sides) and systems (HVAC, solar). Tap the front door to go inside; tap the
           HVAC unit or solar panels for their maintenance cards.</li>
       <li><strong>Floor plan:</strong> tap a room to step into it (works even when the tap
-          lands on furniture); long-press a room for options. Toggle the <strong>pencil</strong>
-          for all plan editing — wall modes (Solid / Open / Door / Window), selecting empty
-          tiles to create rooms, and adding or removing columns, rows, and floors.</li>
+          lands on furniture); long-press a room for options (enter / change type / remove).
+          Toggle the <strong>pencil</strong> for all plan editing — wall modes (Solid / Open /
+          Door / Window), selecting empty tiles to create rooms, and adding or removing
+          columns, rows, and floors; the gear icon stays camera-only. Adjacent rooms of the
+          same type merge automatically into one continuous space.</li>
       <li><strong>Room view:</strong> long-press a furniture icon in the tray and drag it in;
           tap placed furniture to rotate, flip, or remove it; long-press-drag to move it —
-          or drag it out through a wall to remove it. Positions persist automatically.</li>
+          or drag it out through a wall to remove it. Appliances and fixtures are toggled
+          from the pane and tapped to open their maintenance cards. Positions persist
+          automatically.</li>
     </ul>
 
     <h2>5. Camera</h2>
@@ -160,7 +164,21 @@
     <p>Every scene's <strong>gear</strong> has its own camera settings, remembered per scene.
        The room view adds angle presets: Eye (doorway), Corner (whole room), Top (overhead).</p>
 
-    <h2 id="child-safety">Safety — children</h2>
+    <h2>Safety</h2>
+
+    <h3>Task and guide accuracy</h3>
+    <ul>
+      <li>DIY guides and task descriptions are informational only. Manufacturer instructions
+          and local building codes always take precedence over anything in this app.</li>
+      <li>If you're unsure about a repair — especially electrical, gas, or structural — use a
+          licensed professional (that's what the <strong>Pros</strong> tab is for). The app
+          schedules reminders; it does not assess whether a task is safe for you to do
+          yourself.</li>
+      <li>Lifespan and upkeep estimates are industry averages combined with the dates you
+          entered — a prompt to check something, not a certification of safety.</li>
+    </ul>
+
+    <h3 id="child-safety">Safety — children</h3>
     <div class="callout warn">
       Casa Health schedules reminders; <strong>you</strong> create the conditions the work
       happens in. Several tasks it will remind you about involve real hazards to children if
@@ -192,9 +210,17 @@
       <li><strong>Electrical panels, HVAC, and solar</strong> — adult-only and, in most
           cases, professional-supervised. Keep panel access restricted at all times.</li>
     </ul>
-    <p>The DIY guides are informational only — follow manufacturer instructions and local
-       codes, and when in doubt (especially with electrical, gas, or structural work), use
-       the <strong>Pros</strong> tab for what it's for.</p>
+
+    <h3>App and platform</h3>
+    <ul>
+      <li>Fully offline operation with minimal permissions — no camera, location, or
+          contacts access.</li>
+      <li>The 3D engine requires <strong>OpenGL ES 3.1</strong> (mandatory); Vulkan 1.0 is
+          used when the device supports it.</li>
+      <li>64-bit devices only: <code>arm64-v8a</code> or <code>x86_64</code>.</li>
+      <li>Document attachments use persistable URIs from the system file picker; the
+          database lives in the app's private storage.</li>
+    </ul>
 
   </div>
 </article>
