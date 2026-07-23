@@ -1,0 +1,2 @@
+-keep class com.homerenderer.model.** { *; }
+-keep class com.homerenderer.db.** { *; }

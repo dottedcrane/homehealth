@@ -1,0 +1,67 @@
+plugins {
+    id 'org.jetbrains.kotlin.multiplatform'
+    id 'com.android.library'
+    id 'com.google.devtools.ksp'
+}
+
+kotlin {
+    jvmToolchain(21)
+
+    androidTarget {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
+        }
+    }
+    jvm()
+
+    sourceSets {
+        commonMain {
+            dependencies {
+                // Entities/Converters expose model types (HomeStyle, FloorCount, ...) in their public
+                // signatures, and consumers (:app) construct/read those entities directly — so this,
+                // and everything else touched below, must be `api`, not `implementation`, or downstream
+                // compilation fails with "cannot access X which is a supertype/param of Y".
+                api project(':core-model')
+
+                // HomeDatabase extends RoomDatabase and DAOs are called directly by :app.
+                api 'androidx.room:room-runtime:2.8.4'
+
+                // UserHomeDao exposes Flow<...> in its public method signatures
+                api 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0'
+            }
+        }
+        commonTest {
+            dependencies {
+                implementation kotlin('test')
+            }
+        }
+        androidMain {
+            dependencies {
+                implementation 'androidx.core:core-ktx:1.18.0'
+            }
+        }
+    }
+}
+
+android {
+    namespace = 'com.homerenderer.data.core'
+    compileSdk 36
+
+    defaultConfig {
+        minSdk = 24
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
+    }
+}
+
+dependencies {
+    add("kspAndroid", "androidx.room:room-compiler:2.8.4")
+    add("kspJvm", "androidx.room:room-compiler:2.8.4")
+}
+
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
+}

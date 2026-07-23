@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+        OpenGL ES 3.1 is the minimum required by Filament (SceneView's rendering engine).
+        Devices without it (very old hardware) will not see the app on Play Store.
+    -->
+    <uses-feature android:glEsVersion="0x00030001" android:required="true" />
+
+    <!--
+        Vulkan is used on supporting devices (Snapdragon/Exynos/Dimensity with Vulkan 1.0+)
+        for better performance. Falls back to OpenGL ES on devices without Vulkan.
+    -->
+    <uses-feature android:name="android.hardware.vulkan.version"
+        android:version="0x00400000"
+        android:required="false" />
+
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="com.android.vending.BILLING" />
+
+    <!--
+        CAMERA permission and AR feature are NOT currently used.
+        Uncomment when implementing the "Scan Room" AR feature.
+
+    <uses-permission android:name="android.permission.CAMERA" />
+    <uses-feature android:name="android.hardware.camera.ar" android:required="false" />
+    <meta-data android:name="com.google.ar.core" android:value="optional" />
+    -->
+
+    <application
+        android:allowBackup="true"
+        android:hardwareAccelerated="true"
+        android:largeHeap="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.HomeRenderer">
+
+        <activity
+            android:name="com.homerenderer.ui.MainActivity"
+            android:exported="true"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|uiMode|density"
+            android:windowSoftInputMode="adjustResize">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

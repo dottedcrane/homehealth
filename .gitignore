@@ -1,0 +1,36 @@
+# ── Gradle build outputs ──────────────────────────────────────────────────────
+**/build/
+**/bin/
+.gradle/
+gradle-wrapper.jar
+
+# ── Android Studio / IntelliJ / VS Code ───────────────────────────────────────
+.idea/
+*.iml
+*.hprof
+captures/
+.vscode/
+.junie/
+.claude/
+
+# ── Local machine config ───────────────────────────────────────────────────────
+local.properties
+keystore.properties
+*.jks
+*.keystore
+google-services.json
+app/google-services.json
+
+# ── Kotlin / JVM toolchain ───────────────────────────────────────────────────
+.kotlin/
+*.class
+
+# ── NDK / CMake ───────────────────────────────────────────────────────────────
+.externalNativeBuild/
+.cxx/
+
+# ── OS-generated files ────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+Desktop.ini
+app/release/app-release.aab

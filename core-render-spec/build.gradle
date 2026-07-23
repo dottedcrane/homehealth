@@ -1,0 +1,37 @@
+plugins {
+    id 'org.jetbrains.kotlin.multiplatform'
+    id 'com.android.library'
+}
+
+kotlin {
+    jvmToolchain(21)
+
+    androidTarget {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
+        }
+    }
+    jvm()
+
+    sourceSets {
+        commonMain {
+            dependencies {
+                implementation project(':core-model')
+            }
+        }
+    }
+}
+
+android {
+    namespace = 'com.homerenderer.renderspec.core'
+    compileSdk 36
+
+    defaultConfig {
+        minSdk = 24
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
+    }
+}

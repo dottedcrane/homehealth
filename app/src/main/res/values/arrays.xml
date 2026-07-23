@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Must match HomeStyle enum order: HOUSE, APARTMENT, CONDO, TOWNHOUSE, STUDIO -->
+    <string-array name="home_styles">
+        <item>House</item>
+        <item>Apartment</item>
+        <item>Condo</item>
+        <item>Townhouse</item>
+        <item>Studio</item>
+    </string-array>
+
+    <!-- Must match HomeSize enum order: SMALL, MEDIUM, LARGE, XLARGE -->
+    <string-array name="home_sizes">
+        <item>Small (up to 800 sq ft)</item>
+        <item>Medium (800–1,500 sq ft)</item>
+        <item>Large (1,500–2,500 sq ft)</item>
+        <item>Extra Large (2,500+ sq ft)</item>
+    </string-array>
+
+    <!-- Must match FloorCount enum order: ONE, TWO, THREE_PLUS -->
+    <string-array name="floor_counts">
+        <item>1 Floor</item>
+        <item>2 Floors</item>
+        <item>3+ Floors</item>
+    </string-array>
+
+    <!-- Must match LayoutType enum order: OPEN_PLAN, COMPARTMENTALIZED, MIXED -->
+    <string-array name="layout_types">
+        <item>Open Plan</item>
+        <item>Compartmentalized</item>
+        <item>Mixed</item>
+    </string-array>
+</resources>

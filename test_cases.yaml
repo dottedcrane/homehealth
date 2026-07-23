@@ -1,0 +1,282 @@
+tests:
+  - displayName: Claim a Home and Make it Yours
+    id: claim-a-home-and-make-it-yours
+    steps:
+      - goal: Claim a Home and Make it Yours
+        hint: >-
+          in the Neighborhood view, find a home similar to your and claim the
+          Home, by clicking Mine after tapping on it.
+        finalScreenAssertion: >-
+          Home built year and purchase year appears and you can Save the home as
+          yours.
+
+  - displayName: Preview a Neighbor Home Before Claiming
+    id: preview-a-neighbor-home
+    steps:
+      - goal: Preview a Neighbor Home Before Claiming
+        hint: >-
+          in the Neighborhood view, tap any of the model homes (Classic,
+          Penthouse, Townhouse, Ranch, or Estate) to preview its exterior
+          without claiming it.
+        finalScreenAssertion: >-
+          The exterior of the selected home is shown in 3D with a Mine button
+          visible, and the Back arrow returns to the Neighborhood.
+
+  - displayName: Edit Home Built and Purchase Years
+    id: edit-home-built-and-purchase-years
+    steps:
+      - goal: Edit Home Built and Purchase Years
+        hint: >-
+          after claiming a home, in the Exterior view tap the Home icon in the
+          pane to open the home info dialog, change the Year built and Year
+          purchased, then tap Save.
+        finalScreenAssertion: >-
+          The dialog closes and reopening it via the Home icon shows the
+          updated Year built and Year purchased values.
+
+  - displayName: Enter the Floor Plan Through the Front Door
+    id: enter-floor-plan-through-front-door
+    steps:
+      - goal: Enter the Floor Plan Through the Front Door
+        hint: >-
+          in the Exterior view of your claimed home, tap the front door of the
+          house to step inside.
+        finalScreenAssertion: >-
+          The Floor Plan view appears showing rooms laid out on a grid, with
+          floor tabs (F1/F2) if the home has multiple storeys.
+
+  - displayName: Step Inside a Room from the Floor Plan
+    id: step-inside-a-room
+    steps:
+      - goal: Step Inside a Room from the Floor Plan
+        hint: >-
+          in the Floor Plan view, tap any room (for example the Kitchen or a
+          Bedroom) to step inside it.
+        finalScreenAssertion: >-
+          The Room view appears showing the room in 3D with its furniture and
+          appliances, and the back arrow returns to the floor plan.
+
+  - displayName: Create a New Room in the Floor Plan
+    id: create-a-new-room
+    steps:
+      - goal: Create a New Room in the Floor Plan
+        hint: >-
+          in the Floor Plan view, toggle the pencil to enter edit mode, tap
+          empty grid tiles to outline a footprint (a toolbar shows how many
+          tiles are selected), then tap Create Room and pick a room type.
+        finalScreenAssertion: >-
+          A new room of the chosen type appears in the floor plan covering the
+          selected tiles.
+
+  - displayName: Change a Wall to a Door or Window
+    id: change-a-wall-to-door-or-window
+    steps:
+      - goal: Change a Wall to a Door or Window
+        hint: >-
+          in the Floor Plan view with the pencil edit mode on, tap a wall of a
+          room and choose one of the options such as Add Door, Add Window, or
+          Make Solid.
+        finalScreenAssertion: >-
+          The tapped wall updates to show the chosen state (door opening or
+          window) in the floor plan.
+
+  - displayName: Place Furniture in a Room
+    id: place-furniture-in-a-room
+    steps:
+      - goal: Place Furniture in a Room
+        hint: >-
+          in the Room view, long-press a furniture icon in the tray, then drag
+          it into the room to place it. Tap the placed furniture to see
+          rotate / flip / remove options.
+        finalScreenAssertion: >-
+          The furniture item appears inside the room at the dropped position
+          and tapping it shows rotate, flip, and remove controls.
+
+  - displayName: Add a Pool or Deck to the Lot
+    id: add-a-pool-or-deck-to-the-lot
+    steps:
+      - goal: Add a Pool or Deck to the Lot
+        hint: >-
+          in the Exterior view, open the Home features pane and tap a feature
+          such as Pool or Deck to place it; tapping again cycles which side of
+          the house it sits on (Front/Right/Back/Left) and the last tap
+          removes it.
+        finalScreenAssertion: >-
+          The chosen feature is visible on the lot next to the house on the
+          selected side.
+
+  - displayName: Mark a Home System as Installed
+    id: mark-a-home-system-as-installed
+    steps:
+      - goal: Mark a Home System as Installed
+        hint: >-
+          in the Exterior view, tap a home system such as Solar or HVAC in the
+          pane to mark it as installed on the home.
+        finalScreenAssertion: >-
+          The system appears on the house (solar panels on the roof or an HVAC
+          unit), and tapping it opens its maintenance card.
+
+  - displayName: Track an Appliance's Install Year and Lifespan
+    id: track-appliance-install-year-and-lifespan
+    steps:
+      - goal: Track an Appliance's Install Year and Lifespan
+        hint: >-
+          in a Room view (for example the Kitchen), tap an appliance to open
+          its maintenance card, enter an Install year (or tap Now), and tap
+          Save.
+        finalScreenAssertion: >-
+          The maintenance card shows the Expected lifespan and a Remaining
+          value computed from the install year, and reopening the card shows
+          the saved install year.
+
+  - displayName: Attach a Document to an Appliance
+    id: attach-a-document-to-an-appliance
+    steps:
+      - goal: Attach a Document to an Appliance
+        hint: >-
+          in an appliance's maintenance card, use the Documents & Warranties
+          section to attach a file via the document picker, then Save.
+        finalScreenAssertion: >-
+          The attached document is listed under Documents & Warranties in the
+          appliance's maintenance card.
+
+  - displayName: Park a Car in the Garage
+    id: park-a-car-in-the-garage
+    steps:
+      - goal: Park a Car in the Garage
+        hint: >-
+          in the Exterior view, long-press the car icon in the Vehicles pane
+          and drag it onto the garage — the car parks inside (the garage holds
+          one vehicle; other vehicles land on the driveway).
+        finalScreenAssertion: >-
+          The car is parked in the garage, and tapping it opens its actions
+          bar (paint color, gas/electric, Track, Remove).
+
+  - displayName: Open the Garage and Operate the Door
+    id: open-the-garage-and-operate-the-door
+    steps:
+      - goal: Open the Garage and Operate the Door
+        hint: >-
+          in the Exterior view, tap the garage door to enter the Garage view,
+          then tap the overhead door to close and open it.
+        finalScreenAssertion: >-
+          The Garage view is shown, the overhead door animates open and
+          closed, and a parked car rolls in and out with it.
+
+  - displayName: Remove a Vehicle from the Lot
+    id: remove-a-vehicle-from-the-lot
+    steps:
+      - goal: Remove a Vehicle from the Lot
+        hint: >-
+          in the Exterior view, long-press a placed vehicle and drag it to the
+          street end of the driveway to remove it.
+        finalScreenAssertion: >-
+          The vehicle disappears from the lot and no longer appears in the
+          Vehicles section of the Score tab in the Maintenance Hub.
+
+  - displayName: Complete a Task in the Maintenance To-Do List
+    id: complete-a-maintenance-todo-task
+    steps:
+      - goal: Complete a Task in the Maintenance To-Do List
+        hint: >-
+          after claiming a home, tap the wrench icon in the pane to open the
+          Maintenance Hub, switch to the To-Do tab, and mark a maintenance
+          task as done.
+        finalScreenAssertion: >-
+          The task shows as completed in the To-Do list.
+
+  - displayName: Review the Home Score
+    id: review-the-home-score
+    steps:
+      - goal: Review the Home Score
+        hint: >-
+          open the Maintenance Hub via the wrench icon and switch to the Score
+          tab to see the inventory of tracked items, including a Vehicles
+          section if any vehicles are placed.
+        finalScreenAssertion: >-
+          The Score tab lists the home's tracked items grouped by room, with
+          vehicles shown in their own Vehicles section.
+
+  - displayName: Read a Repair Guide
+    id: read-a-repair-guide
+    steps:
+      - goal: Read a Repair Guide
+        hint: >-
+          open the Maintenance Hub via the wrench icon, switch to the Guides
+          tab, and open one of the repair guides.
+        finalScreenAssertion: >-
+          The guide's content is displayed with step-by-step repair
+          instructions.
+
+  - displayName: Save a Pro Contact
+    id: save-a-pro-contact
+    steps:
+      - goal: Save a Pro Contact
+        hint: >-
+          open the Maintenance Hub via the wrench icon, switch to the Pros
+          tab, tap Add, fill in Name or company, Trade, Phone, and Email, then
+          tap Save.
+        finalScreenAssertion: >-
+          The new contact appears in the Pros list with the entered name and
+          trade, and reopening it shows the saved details.
+
+  - displayName: Back Up App Data
+    id: back-up-app-data
+    steps:
+      - goal: Back Up App Data
+        hint: >-
+          in the Exterior view, tap the Home icon to open the home info
+          dialog and tap Backup App Data.
+        finalScreenAssertion: >-
+          A confirmation dialog appears reporting the backup succeeded (for
+          example "Database backed up successfully").
+
+  - displayName: Claimed Home Persists After Restart
+    id: claimed-home-persists-after-restart
+    steps:
+      - goal: Claimed Home Persists After Restart
+        hint: >-
+          after claiming a home and saving some data, close the app completely
+          and relaunch it.
+        finalScreenAssertion: >-
+          The app opens directly to the Exterior view of the claimed home
+          (not the Neighborhood picker), with all placed features, vehicles,
+          and saved dates intact.
+
+  - displayName: Adjust the Camera and Reset the View
+    id: adjust-the-camera-and-reset-the-view
+    steps:
+      - goal: Adjust the Camera and Reset the View
+        hint: >-
+          in any 3D view, tap the gear icon to open Camera settings, change
+          the Angle or adjust Orbit speed and Zoom speed, then use Reset view
+          and tap Done.
+        finalScreenAssertion: >-
+          The camera returns to its default position and the settings dialog
+          closes.
+
+  - displayName: View Contextual Help
+    id: view-contextual-help
+    steps:
+      - goal: View Contextual Help
+        hint: >-
+          tap the Help icon in the current view (for example the Floor Plan or
+          Garage) to open the help dialog for that screen.
+        finalScreenAssertion: >-
+          A help dialog appears with tips specific to the current view (for
+          example "Managing your Vehicles" in the Garage view) and OK
+          dismisses it.
+
+  - displayName: Start the Premium Purchase
+    id: start-the-premium-purchase
+    steps:
+      - goal: Start the Premium Purchase
+        hint: >-
+          in the Exterior view, tap the Home icon in the pane to open the home
+          info dialog, then tap the locked Backup or Restore button (shown
+          with its localized price, e.g. "Backup (Premium · $1.99)") to
+          launch the billing flow.
+        finalScreenAssertion: >-
+          The Google Play purchase sheet opens for the Premium product, and
+          after a successful purchase the Backup and Restore buttons unlock
+          (no longer showing a lock icon or price).

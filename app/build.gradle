@@ -1,0 +1,118 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'com.google.devtools.ksp'
+    id 'org.jetbrains.kotlin.plugin.compose'
+    id("com.google.gms.google-services")
+}
+
+android {
+    namespace = 'com.casahealth.homehealth'
+    compileSdk 36
+
+    defaultConfig {
+        applicationId = "com.casahealth.homehealth"
+        minSdk = 24          // Android 7.0 — covers ~99% of active devices
+        targetSdk = 36
+        versionCode = 17
+        versionName = "2.3.7"
+
+        ndk {
+            // arm64-v8a  — all modern Samsung, Motorola, Pixel (Snapdragon / Exynos / Tensor)
+            // x86_64     — Android emulators (development only)
+            // armeabi-v7a is intentionally excluded: Filament 4.x requires 64-bit ARM.
+            //   32-bit-only devices (Android ≤ 9, budget tier pre-2020) cannot run Filament.
+            abiFilters = ['arm64-v8a', 'x86_64']
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled = true
+            shrinkResources = true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug {
+            minifyEnabled = false
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
+    }
+    kotlinOptions {
+        jvmTarget = '21'
+    }
+    buildFeatures {
+        compose = true
+    }
+    packaging {
+        resources {
+            excludes += '/META-INF/{AL2.0,LGPL2.1}'
+        }
+        jniLibs {
+            // Store native libs uncompressed — required for 16 KB page-size alignment
+            // (Android 15+) and faster loading on Android 6.0+ (our minSdk is 7.0).
+            useLegacyPackaging = false
+        }
+    }
+}
+
+dependencies {
+    implementation project(':core-model')
+    implementation project(':core-data')
+    implementation project(':core-render-spec')
+
+    implementation 'androidx.core:core-ktx:1.18.0'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'com.google.android.material:material:1.14.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.2.1'
+    implementation 'androidx.activity:activity-ktx:1.13.0'
+
+    // Lifecycle
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-ktx:2.10.0'
+    implementation 'androidx.lifecycle:lifecycle-livedata-ktx:2.10.0'
+    implementation 'androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0'
+
+    // Coroutines
+    implementation 'org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0'
+
+    // Compose
+    implementation platform('androidx.compose:compose-bom:2026.06.01')
+    implementation 'androidx.compose.ui:ui'
+    implementation 'androidx.compose.ui:ui-graphics'
+    implementation 'androidx.compose.ui:ui-tooling-preview'
+    implementation 'androidx.compose.material3:material3'
+    implementation 'androidx.compose.material:material-icons-extended'
+    implementation 'androidx.activity:activity-compose:1.13.0'
+    implementation 'androidx.lifecycle:lifecycle-runtime-compose:2.10.0'
+
+    // SceneView — Filament 3D rendering, no ARCore dependency.
+    // Works on any device with OpenGL ES 3.1 or Vulkan 1.0 (declared in AndroidManifest).
+    implementation 'io.github.sceneview:sceneview:4.16.0'
+
+    // ARSceneView — camera-based AR with ARCore anchoring.
+    // Uncomment when implementing the "Scan Room" feature. Requires:
+    //   • CAMERA permission in AndroidManifest
+    //   • android.hardware.camera.ar feature (optional) for Play Store filtering
+    //   • meta-data com.google.ar.core = optional
+    // implementation 'io.github.sceneview:arsceneview:4.16.2'
+
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.3.0'
+
+    // Import the Firebase BoM
+    implementation(platform("com.google.firebase:firebase-bom:34.15.0"))
+    // TODO: Add the dependencies for Firebase products you want to use
+    // When using the BoM, don't specify versions in Firebase dependencies
+    implementation("com.google.firebase:firebase-analytics")
+
+    // Google Play Billing
+    implementation 'com.android.billingclient:billing-ktx:9.1.0'
+
+    // Security - EncryptedSharedPreferences
+    implementation 'androidx.security:security-crypto:1.1.0'
+
+
+}

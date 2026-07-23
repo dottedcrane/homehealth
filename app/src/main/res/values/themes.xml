@@ -1,0 +1,12 @@
+<resources>
+    <!--
+        NoActionBar: the app is full-screen Compose — no XML action bar.
+        Without this, Samsung One UI and Motorola show a "HomeRenderer" title bar
+        at the top of the screen above the Compose content.
+
+        Material 2 color attributes (colorPrimaryVariant, colorSecondaryVariant, etc.)
+        are intentionally absent — they don't exist in Material 3 and cause attribute
+        resolution failures on strict One UI theme validation.
+    -->
+    <style name="Theme.HomeRenderer" parent="Theme.Material3.DayNight.NoActionBar" />
+</resources>
