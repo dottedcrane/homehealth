@@ -1,4 +1,4 @@
-package com.homerenderer.db
+package com.homehealth.db
 
 import androidx.room.*
 import kotlinx.coroutines.flow.Flow

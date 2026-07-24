@@ -1,9 +1,9 @@
-package com.homerenderer.renderspec
+package com.homehealth.renderspec
 
-import com.homerenderer.model.FeatureSide
-import com.homerenderer.model.FloorLayout
-import com.homerenderer.model.PlacedItem
-import com.homerenderer.model.RoomItem
+import com.homehealth.model.FeatureSide
+import com.homehealth.model.FloorLayout
+import com.homehealth.model.PlacedItem
+import com.homehealth.model.RoomItem
 import kotlin.math.abs
 
 /**

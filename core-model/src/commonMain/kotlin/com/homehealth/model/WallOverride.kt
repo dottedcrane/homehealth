@@ -1,4 +1,4 @@
-package com.homerenderer.model
+package com.homehealth.model
 
 enum class WallMode { DOOR, SOLID, OPEN, WINDOW }
 

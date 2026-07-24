@@ -1,11 +1,11 @@
-package com.homerenderer.db
+package com.homehealth.db
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.homerenderer.model.FloorCount
-import com.homerenderer.model.HomeSize
-import com.homerenderer.model.HomeStyle
-import com.homerenderer.model.LayoutType
+import com.homehealth.model.FloorCount
+import com.homehealth.model.HomeSize
+import com.homehealth.model.HomeStyle
+import com.homehealth.model.LayoutType
 
 @Entity(tableName = "home_models")
 data class HomeModelEntity(

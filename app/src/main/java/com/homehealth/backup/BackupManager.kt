@@ -1,11 +1,13 @@
-package com.homerenderer.backup
+package com.homehealth.backup
 
 import android.content.Context
 import android.net.Uri
-import com.homerenderer.db.DocumentEntity
-import com.homerenderer.db.HomeDatabase
-import com.homerenderer.db.UserHomeDao
-import com.homerenderer.db.UserHomeEntity
+import com.homehealth.db.DocumentEntity
+import com.homehealth.db.HomeDatabase
+import com.homehealth.db.UserHomeDao
+import com.homehealth.db.UserHomeEntity
+import com.homehealth.db.closeInstance
+import com.homehealth.db.getInstance
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -62,7 +64,7 @@ class BackupManager(private val context: Context) {
     ) = withContext(Dispatchers.IO) {
         // Copy all three WAL-mode files so any SQLite tool can open the backup as-is.
         // SQLite docs recommend this approach when an exclusive lock cannot be obtained.
-        val dbFile  = context.getDatabasePath("home_renderer.db")
+        val dbFile  = context.getDatabasePath("home_health.db")
         val dateStr = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).format(Date())
         val attachmentMap = mutableMapOf<String, MutableList<String>>()
 
@@ -77,7 +79,7 @@ class BackupManager(private val context: Context) {
             for (suffix in listOf("", "-wal", "-shm")) {
                 val f = if (suffix.isEmpty()) dbFile else File(dbFile.path + suffix)
                 if (f.exists() && f.length() > 0) {
-                    zos.putNextEntry(ZipEntry("db/home_renderer.db$suffix"))
+                    zos.putNextEntry(ZipEntry("db/home_health.db$suffix"))
                     f.inputStream().use { it.copyTo(zos) }
                     zos.closeEntry()
                 }
@@ -142,10 +144,10 @@ class BackupManager(private val context: Context) {
 
             HomeDatabase.closeInstance()
 
-            val dbFile = context.getDatabasePath("home_renderer.db")
+            val dbFile = context.getDatabasePath("home_health.db")
             dbFile.parentFile?.mkdirs()
             for (suffix in listOf("", "-wal", "-shm")) {
-                val src = File(tempDir, "db/home_renderer.db$suffix")
+                val src = File(tempDir, "db/home_health.db$suffix")
                 val dst = File(dbFile.path + suffix)
                 if (src.exists()) src.copyTo(dst, overwrite = true)
                 else dst.delete()   // a stale wal/shm left over from the CURRENT db would corrupt the restored one

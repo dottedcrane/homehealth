@@ -1,6 +1,6 @@
-package com.homerenderer.model
+package com.homehealth.model
 
-import com.homerenderer.util.randomUUIDString
+import com.homehealth.util.randomUUIDString
 
 // A user-placed deck instance — unlike garage/pool (one slot each, in featurePlacements),
 // decks support multiple copies, added via tear-drag from the sidebar tray just like

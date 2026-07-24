@@ -35,10 +35,10 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.HomeRenderer">
+        android:theme="@style/Theme.HomeHealth">
 
         <activity
-            android:name="com.homerenderer.ui.MainActivity"
+            android:name="com.homehealth.ui.MainActivity"
             android:exported="true"
             android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|uiMode|density"
             android:windowSoftInputMode="adjustResize">

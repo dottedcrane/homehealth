@@ -1,4 +1,4 @@
-package com.homerenderer.ar
+package com.homehealth.ar
 
 import android.Manifest
 import android.app.Activity

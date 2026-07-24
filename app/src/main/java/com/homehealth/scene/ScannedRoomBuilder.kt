@@ -1,7 +1,7 @@
-package com.homerenderer.scene
+package com.homehealth.scene
 
 import com.google.android.filament.Engine
-import com.homerenderer.ar.RoomGeometry
+import com.homehealth.ar.RoomGeometry
 import io.github.sceneview.loaders.MaterialLoader
 import io.github.sceneview.math.Position
 import io.github.sceneview.math.Rotation

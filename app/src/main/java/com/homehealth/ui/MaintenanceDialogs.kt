@@ -1,4 +1,4 @@
-package com.homerenderer.ui
+package com.homehealth.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -18,13 +18,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import com.homerenderer.db.ApplianceRecordEntity
-import com.homerenderer.db.DocumentEntity
-import com.homerenderer.db.UserHomeEntity
-import com.homerenderer.model.HiddenAsset
-import com.homerenderer.model.HomeSystem
-import com.homerenderer.model.RoomItem
-import com.homerenderer.model.label
+import com.homehealth.db.ApplianceRecordEntity
+import com.homehealth.db.DocumentEntity
+import com.homehealth.db.UserHomeEntity
+import com.homehealth.model.HiddenAsset
+import com.homehealth.model.HomeSystem
+import com.homehealth.model.RoomItem
+import com.homehealth.model.label
 import java.util.Calendar
 
 // ── Maintenance target (room item or home system) ─────────────────────────────

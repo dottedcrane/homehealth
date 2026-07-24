@@ -1,10 +1,10 @@
-package com.homerenderer.renderspec
+package com.homehealth.renderspec
 
-import com.homerenderer.model.FeatureSide
-import com.homerenderer.model.RoomZone
-import com.homerenderer.model.WallMode
-import com.homerenderer.scene.FLOOR_HEIGHT_M
-import com.homerenderer.scene.WALL_T
+import com.homehealth.model.FeatureSide
+import com.homehealth.model.RoomZone
+import com.homehealth.model.WallMode
+import com.homehealth.scene.FLOOR_HEIGHT_M
+import com.homehealth.scene.WALL_T
 
 data class Vec3(val x: Float, val y: Float, val z: Float)
 

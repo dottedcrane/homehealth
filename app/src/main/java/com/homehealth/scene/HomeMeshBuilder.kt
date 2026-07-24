@@ -1,9 +1,9 @@
-package com.homerenderer.scene
+package com.homehealth.scene
 
 import com.google.android.filament.Engine
-import com.homerenderer.model.HomeSize
-import com.homerenderer.model.HomeStyle
-import com.homerenderer.model.HomeType
+import com.homehealth.model.HomeSize
+import com.homehealth.model.HomeStyle
+import com.homehealth.model.HomeType
 import io.github.sceneview.loaders.MaterialLoader
 import io.github.sceneview.math.Position
 import io.github.sceneview.math.Rotation

@@ -1,4 +1,4 @@
-package com.homerenderer.model
+package com.homehealth.model
 
 object ModelPresets {
     val house = HomeType(

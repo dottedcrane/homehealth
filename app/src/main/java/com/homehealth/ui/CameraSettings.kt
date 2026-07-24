@@ -1,4 +1,4 @@
-package com.homerenderer.ui
+package com.homehealth.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement

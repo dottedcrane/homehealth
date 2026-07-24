@@ -1,4 +1,4 @@
-package com.homerenderer.model
+package com.homehealth.model
 
 enum class HomeFeature { GARAGE, YARD, POOL, DECK }
 enum class HomeSystem   { SOLAR, HVAC }

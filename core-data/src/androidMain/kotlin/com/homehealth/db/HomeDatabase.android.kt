@@ -1,4 +1,4 @@
-package com.homerenderer.db
+package com.homehealth.db
 
 import android.content.Context
 import androidx.room.Room
@@ -15,7 +15,7 @@ fun HomeDatabase.Companion.getInstance(context: Context): HomeDatabase =
         instance ?: Room.databaseBuilder(
             context.applicationContext,
             HomeDatabase::class.java,
-            "home_renderer.db"
+            "home_health.db"
         )
             .addMigrations(*MIGRATIONS)
             .build()

@@ -1,4 +1,4 @@
-package com.homerenderer.ui
+package com.homehealth.ui
 
 import android.content.Context
 import android.content.Intent
@@ -25,21 +25,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import com.homerenderer.data.*
-import com.homerenderer.db.ApplianceRecordEntity
-import com.homerenderer.db.MaintenanceTaskRecord
-import com.homerenderer.db.ProContactEntity
-import com.homerenderer.model.FeatureSide
-import com.homerenderer.model.HiddenAsset
-import com.homerenderer.model.HomeFeature
-import com.homerenderer.model.HomeStyle
-import com.homerenderer.model.HomeSystem
-import com.homerenderer.model.RoomItem
-import com.homerenderer.model.RoomType
-import com.homerenderer.model.defaultItems
-import com.homerenderer.model.isApplicable
-import com.homerenderer.model.items
-import com.homerenderer.model.label
+import com.homehealth.data.*
+import com.homehealth.db.ApplianceRecordEntity
+import com.homehealth.db.MaintenanceTaskRecord
+import com.homehealth.db.ProContactEntity
+import com.homehealth.model.FeatureSide
+import com.homehealth.model.HiddenAsset
+import com.homehealth.model.HomeFeature
+import com.homehealth.model.HomeStyle
+import com.homehealth.model.HomeSystem
+import com.homehealth.model.RoomItem
+import com.homehealth.model.RoomType
+import com.homehealth.model.defaultItems
+import com.homehealth.model.isApplicable
+import com.homehealth.model.items
+import com.homehealth.model.label
 import java.util.Calendar
 
 // ── Calendar helper ───────────────────────────────────────────────────────────

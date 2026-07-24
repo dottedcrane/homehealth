@@ -1,6 +1,6 @@
-package com.homerenderer.scene
+package com.homehealth.scene
 
-import com.homerenderer.model.HomeSize
+import com.homehealth.model.HomeSize
 
 const val FLOOR_HEIGHT_M = 2.7f
 const val WALL_T         = 0.2f

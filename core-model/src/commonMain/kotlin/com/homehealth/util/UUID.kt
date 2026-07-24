@@ -1,3 +1,3 @@
-package com.homerenderer.util
+package com.homehealth.util
 
 expect fun randomUUIDString(): String

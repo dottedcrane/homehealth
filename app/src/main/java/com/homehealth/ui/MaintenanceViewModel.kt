@@ -1,12 +1,12 @@
-package com.homerenderer.ui
+package com.homehealth.ui
 
 import android.app.Application
 import android.net.Uri
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.homerenderer.backup.BackupManager
-import com.homerenderer.db.*
-import com.homerenderer.model.*
+import com.homehealth.backup.BackupManager
+import com.homehealth.db.*
+import com.homehealth.model.*
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow

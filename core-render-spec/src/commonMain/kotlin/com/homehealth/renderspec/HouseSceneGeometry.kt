@@ -1,11 +1,11 @@
-package com.homerenderer.renderspec
+package com.homehealth.renderspec
 
-import com.homerenderer.model.FeatureSide
-import com.homerenderer.model.FloorLayout
-import com.homerenderer.model.HomeStyle
-import com.homerenderer.model.RoomType
-import com.homerenderer.scene.FLOOR_HEIGHT_M
-import com.homerenderer.scene.WALL_T
+import com.homehealth.model.FeatureSide
+import com.homehealth.model.FloorLayout
+import com.homehealth.model.HomeStyle
+import com.homehealth.model.RoomType
+import com.homehealth.scene.FLOOR_HEIGHT_M
+import com.homehealth.scene.WALL_T
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
@@ -374,7 +374,7 @@ object HouseSceneGeometry {
     }
 
     /** The garage's resolved box: [side]'s default anchor plus a live drag offset. The single
-     *  source of truth for "where is the garage" — both [com.homerenderer.renderspec.CarLotGeometry.carLot]
+     *  source of truth for "where is the garage" — both [com.homehealth.renderspec.CarLotGeometry.carLot]
      *  and the shell renderer read from this instead of independently re-deriving an anchor,
      *  which is exactly the duplication that let the two drift out of agreement before. */
     fun garageBox(w: Float, d: Float, side: FeatureSide, dx: Float = 0f, dz: Float = 0f): FeatureBox {

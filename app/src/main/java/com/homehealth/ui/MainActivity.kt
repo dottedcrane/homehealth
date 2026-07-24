@@ -1,4 +1,4 @@
-package com.homerenderer.ui
+package com.homehealth.ui
 
 import android.net.Uri
 import android.os.Bundle
@@ -57,14 +57,14 @@ import androidx.compose.ui.window.DialogWindowProvider
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.homerenderer.billing.BillingManager
-import com.homerenderer.db.HomeStateSerialization
-import com.homerenderer.db.UserHomeEntity
-import com.homerenderer.model.*
-import com.homerenderer.renderspec.CarLotGeometry
-import com.homerenderer.renderspec.HouseSceneGeometry
-import com.homerenderer.scene.FLOOR_HEIGHT_M
-import com.homerenderer.scene.WALL_T
+import com.homehealth.billing.BillingManager
+import com.homehealth.db.HomeStateSerialization
+import com.homehealth.db.UserHomeEntity
+import com.homehealth.model.*
+import com.homehealth.renderspec.CarLotGeometry
+import com.homehealth.renderspec.HouseSceneGeometry
+import com.homehealth.scene.FLOOR_HEIGHT_M
+import com.homehealth.scene.WALL_T
 import dev.romainguy.kotlin.math.Float3
 import io.github.sceneview.SceneView
 import io.github.sceneview.rememberCameraManipulator
@@ -94,7 +94,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MaterialTheme {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                    HomeRendererScreen()
+                    HomeHealthScreen()
                 }
             }
         }
@@ -439,7 +439,7 @@ private fun availableSystems(style: HomeStyle): List<HomeSystem> =
 // ── Screen ────────────────────────────────────────────────────────────────────
 
 @Composable
-fun HomeRendererScreen() {
+fun HomeHealthScreen() {
     val context = LocalContext.current
     val maint: MaintenanceViewModel = viewModel()
 
@@ -1106,7 +1106,7 @@ fun HomeRendererScreen() {
                 onBackup  = {
                     if (isAdFree) {
                         val date = SimpleDateFormat("yyyyMMdd", Locale.US).format(Date())
-                        backupLauncher.launch("homerenderer_backup_$date.zip")
+                        backupLauncher.launch("homehealth_backup_$date.zip")
                         showHomeDatesDialog = false
                     } else {
                         val activity = context as? Activity
@@ -1219,7 +1219,7 @@ fun HomeRendererScreen() {
         val hasGasMotorcycle = placedItems.any { it.item == RoomItem.MOTORCYCLE && !it.electric }
         val tasks = remember(homeStyle, featurePlacements, placedDecks, homeSystems, roomTypes, removedInstances,
                              hasCar, hasBoat, hasMotorcycle, hasGasCar, hasGasMotorcycle) {
-            com.homerenderer.data.HomeTaskList.forHome(
+            com.homehealth.data.HomeTaskList.forHome(
                 style      = homeStyle,
                 features   = featurePlacements.keys,
                 systems    = homeSystems,

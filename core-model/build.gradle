@@ -15,7 +15,7 @@ kotlin {
 }
 
 android {
-    namespace = 'com.homerenderer.model.core'
+    namespace = 'com.homehealth.model.core'
     compileSdk 36
 
     defaultConfig {

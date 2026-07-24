@@ -1,6 +1,6 @@
-package com.homerenderer.model
+package com.homehealth.model
 
-import com.homerenderer.util.randomUUIDString
+import com.homehealth.util.randomUUIDString
 
 data class HomeModel(
     val id: String = randomUUIDString(),

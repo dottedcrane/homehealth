@@ -1,4 +1,4 @@
-package com.homerenderer.billing
+package com.homehealth.billing
 
 import android.app.Activity
 import android.content.Context

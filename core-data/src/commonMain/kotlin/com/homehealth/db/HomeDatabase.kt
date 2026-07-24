@@ -1,4 +1,4 @@
-package com.homerenderer.db
+package com.homehealth.db
 
 import androidx.room.Database
 import androidx.room.RoomDatabase

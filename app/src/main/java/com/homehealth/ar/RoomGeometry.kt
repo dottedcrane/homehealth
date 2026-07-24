@@ -1,4 +1,4 @@
-package com.homerenderer.ar
+package com.homehealth.ar
 
 data class RoomGeometry(
     val floorY: Float,

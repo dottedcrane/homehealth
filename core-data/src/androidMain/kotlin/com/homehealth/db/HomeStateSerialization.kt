@@ -1,17 +1,17 @@
-package com.homerenderer.db
+package com.homehealth.db
 
-import com.homerenderer.model.FeatureSide
-import com.homerenderer.model.FloorLayout
-import com.homerenderer.model.HomeFeature
-import com.homerenderer.model.HomeSystem
-import com.homerenderer.model.PlacedDeck
-import com.homerenderer.model.PlacedItem
-import com.homerenderer.model.RoomItem
-import com.homerenderer.model.RoomPlacement
-import com.homerenderer.model.RoomType
-import com.homerenderer.model.WallKey
-import com.homerenderer.model.WallMode
-import com.homerenderer.util.randomUUIDString
+import com.homehealth.model.FeatureSide
+import com.homehealth.model.FloorLayout
+import com.homehealth.model.HomeFeature
+import com.homehealth.model.HomeSystem
+import com.homehealth.model.PlacedDeck
+import com.homehealth.model.PlacedItem
+import com.homehealth.model.RoomItem
+import com.homehealth.model.RoomPlacement
+import com.homehealth.model.RoomType
+import com.homehealth.model.WallKey
+import com.homehealth.model.WallMode
+import com.homehealth.util.randomUUIDString
 import org.json.JSONArray
 import org.json.JSONObject
 

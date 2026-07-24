@@ -1,4 +1,4 @@
-package com.homerenderer.ui
+package com.homehealth.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -7,12 +7,12 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.homerenderer.model.*
-import com.homerenderer.renderspec.CarLotGeometry
-import com.homerenderer.renderspec.RoomMaterialSlot
-import com.homerenderer.renderspec.RoomSceneGeometry
-import com.homerenderer.scene.FLOOR_HEIGHT_M
-import com.homerenderer.scene.WALL_T
+import com.homehealth.model.*
+import com.homehealth.renderspec.CarLotGeometry
+import com.homehealth.renderspec.RoomMaterialSlot
+import com.homehealth.renderspec.RoomSceneGeometry
+import com.homehealth.scene.FLOOR_HEIGHT_M
+import com.homehealth.scene.WALL_T
 import io.github.sceneview.SceneScope
 import io.github.sceneview.math.Position
 import io.github.sceneview.math.Size

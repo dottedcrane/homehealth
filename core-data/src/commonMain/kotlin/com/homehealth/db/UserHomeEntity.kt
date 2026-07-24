@@ -1,8 +1,8 @@
-package com.homerenderer.db
+package com.homehealth.db
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
-import com.homerenderer.util.currentTimeMillis
+import com.homehealth.util.currentTimeMillis
 
 @Entity(tableName = "user_home")
 data class UserHomeEntity(

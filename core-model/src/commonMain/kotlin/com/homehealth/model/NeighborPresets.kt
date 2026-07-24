@@ -1,4 +1,4 @@
-package com.homerenderer.model
+package com.homehealth.model
 
 data class NeighborHome(
     val label: String,

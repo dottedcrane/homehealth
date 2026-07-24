@@ -1,4 +1,4 @@
-package com.homerenderer.ar
+package com.homehealth.ar
 
 /**
  * Device-independent representation of a plane detected during an AR scan.

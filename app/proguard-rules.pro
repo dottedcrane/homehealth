@@ -1,2 +1,2 @@
--keep class com.homerenderer.model.** { *; }
--keep class com.homerenderer.db.** { *; }
+-keep class com.homehealth.model.** { *; }
+-keep class com.homehealth.db.** { *; }

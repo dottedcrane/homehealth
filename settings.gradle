@@ -16,7 +16,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "HomeRenderer"
+rootProject.name = "HomeHealth"
 include ':app'
 include ':core-model'
 include ':core-data'

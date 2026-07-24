@@ -1,10 +1,10 @@
-package com.homerenderer.db
+package com.homehealth.db
 
 import androidx.room.TypeConverter
-import com.homerenderer.model.FloorCount
-import com.homerenderer.model.HomeSize
-import com.homerenderer.model.HomeStyle
-import com.homerenderer.model.LayoutType
+import com.homehealth.model.FloorCount
+import com.homehealth.model.HomeSize
+import com.homehealth.model.HomeStyle
+import com.homehealth.model.LayoutType
 
 class Converters {
     @TypeConverter fun fromHomeStyle(v: HomeStyle) = v.name

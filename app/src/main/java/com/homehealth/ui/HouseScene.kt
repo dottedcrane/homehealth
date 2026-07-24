@@ -1,4 +1,4 @@
-package com.homerenderer.ui
+package com.homehealth.ui
 
 import android.media.AudioAttributes
 import android.media.AudioFormat
@@ -16,14 +16,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import kotlinx.coroutines.launch
-import com.homerenderer.model.*
-import com.homerenderer.renderspec.CarLot
-import com.homerenderer.renderspec.CarLotGeometry
-import com.homerenderer.renderspec.HouseSceneBoxNode
-import com.homerenderer.renderspec.HouseSceneGeometry
-import com.homerenderer.renderspec.HouseSceneMaterialSlot
-import com.homerenderer.scene.FLOOR_HEIGHT_M
-import com.homerenderer.scene.WALL_T
+import com.homehealth.model.*
+import com.homehealth.renderspec.CarLot
+import com.homehealth.renderspec.CarLotGeometry
+import com.homehealth.renderspec.HouseSceneBoxNode
+import com.homehealth.renderspec.HouseSceneGeometry
+import com.homehealth.renderspec.HouseSceneMaterialSlot
+import com.homehealth.scene.FLOOR_HEIGHT_M
+import com.homehealth.scene.WALL_T
 import io.github.sceneview.SceneScope
 import io.github.sceneview.math.Position
 import io.github.sceneview.math.Rotation

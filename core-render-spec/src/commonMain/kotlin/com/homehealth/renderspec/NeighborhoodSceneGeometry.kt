@@ -1,6 +1,6 @@
-package com.homerenderer.renderspec
+package com.homehealth.renderspec
 
-import com.homerenderer.scene.FLOOR_HEIGHT_M
+import com.homehealth.scene.FLOOR_HEIGHT_M
 import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin

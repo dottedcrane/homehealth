@@ -1,7 +1,7 @@
-package com.homerenderer.model
+package com.homehealth.model
 
-import com.homerenderer.scene.WALL_T
-import com.homerenderer.util.randomUUIDString
+import com.homehealth.scene.WALL_T
+import com.homehealth.util.randomUUIDString
 import kotlin.math.roundToInt
 
 private const val HALLWAY_SIZE = 1.0f

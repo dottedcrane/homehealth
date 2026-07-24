@@ -23,7 +23,7 @@ kotlin {
 }
 
 android {
-    namespace = 'com.homerenderer.renderspec.core'
+    namespace = 'com.homehealth.renderspec.core'
     compileSdk 36
 
     defaultConfig {

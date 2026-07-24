@@ -1,4 +1,4 @@
-package com.homerenderer.scene
+package com.homehealth.scene
 
 import com.google.android.filament.*
 import io.github.sceneview.math.Size

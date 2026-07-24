@@ -1,4 +1,4 @@
-package com.homerenderer.model
+package com.homehealth.model
 
 enum class RoomType {
     // Structural / circulation — typically singular
@@ -322,7 +322,7 @@ fun RoomType.items(): List<RoomItem>          = RoomItem.entries.filter { it.roo
 
 /**
  * The items shown in a room by DEFAULT — with everything else now a drag/tear/rotate/flip
- * [com.homerenderer.model.PlacedItem], this is just the structural garage door. The user
+ * [com.homehealth.model.PlacedItem], this is just the structural garage door. The user
  * taps a default they don't own and marks it "not in my home" to hide it. (Powder rooms
  * get their toilet + vanity as seeded placed items — see bathroomFixtureSlots.)
  */
