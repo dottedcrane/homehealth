@@ -1,9 +1,9 @@
 package com.homerenderer.model
 
-import java.util.UUID
+import com.homerenderer.util.randomUUIDString
 
 data class HomeModel(
-    val id: String = UUID.randomUUID().toString(),
+    val id: String = randomUUIDString(),
     val name: String,
     val homeType: HomeType,
     val rooms: List<Room> = emptyList()

@@ -11,9 +11,9 @@ import com.homerenderer.model.RoomPlacement
 import com.homerenderer.model.RoomType
 import com.homerenderer.model.WallKey
 import com.homerenderer.model.WallMode
+import com.homerenderer.util.randomUUIDString
 import org.json.JSONArray
 import org.json.JSONObject
-import java.util.UUID
 
 object HomeStateSerialization {
 
@@ -151,7 +151,7 @@ object HomeStateSerialization {
                     RoomPlacement(
                         // Layouts saved before ids were serialized fall back to a fresh
                         // UUID (one final id churn); the next save persists it for good.
-                        id      = obj.optString("id").ifEmpty { UUID.randomUUID().toString() },
+                        id      = obj.optString("id").ifEmpty { randomUUIDString() },
                         type    = RoomType.valueOf(obj.getString("type")),
                         col     = obj.getInt("col"),
                         row     = obj.getInt("row"),

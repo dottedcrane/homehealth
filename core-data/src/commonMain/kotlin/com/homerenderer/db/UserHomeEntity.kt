@@ -2,6 +2,7 @@ package com.homerenderer.db
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import com.homerenderer.util.currentTimeMillis
 
 @Entity(tableName = "user_home")
 data class UserHomeEntity(
@@ -19,5 +20,5 @@ data class UserHomeEntity(
     val purchaseYear: Int? = null,
     val label: String = "My Home",
     val neighborKey: String = "",
-    val savedAt: Long = System.currentTimeMillis(),
+    val savedAt: Long = currentTimeMillis(),
 )

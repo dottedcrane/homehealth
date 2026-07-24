@@ -1,13 +1,13 @@
 package com.homerenderer.model
 
 import com.homerenderer.scene.WALL_T
-import java.util.UUID
+import com.homerenderer.util.randomUUIDString
 import kotlin.math.roundToInt
 
 private const val HALLWAY_SIZE = 1.0f
 
 data class RoomPlacement(
-    val id: String = UUID.randomUUID().toString(),
+    val id: String = randomUUIDString(),
     val type: RoomType,
     val col: Int,
     val row: Int,
@@ -528,7 +528,7 @@ fun FloorLayout.wallModesForZone(zone: RoomZone, floor: Int): Map<FeatureSide, W
 const val CAR_PLACEMENT_ID = "vehicles"
 
 data class PlacedItem(
-    val id: String = UUID.randomUUID().toString(),
+    val id: String = randomUUIDString(),
     val placementId: String,
     val item: RoomItem,
     val dx: Float = 0f,

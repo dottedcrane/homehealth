@@ -22,7 +22,11 @@ import androidx.sqlite.execSQL
 @TypeConverters(Converters::class)
 abstract class HomeDatabase : RoomDatabase() {
     abstract fun userHomeDao(): UserHomeDao
+
+    companion object
 }
+
+expect fun getDatabaseBuilder(): RoomDatabase.Builder<HomeDatabase>
 
 val MIGRATIONS: Array<Migration> = arrayOf(
     object : Migration(1, 2) {
