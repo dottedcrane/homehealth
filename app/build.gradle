@@ -3,7 +3,6 @@ plugins {
     id 'org.jetbrains.kotlin.android'
     id 'com.google.devtools.ksp'
     id 'org.jetbrains.kotlin.plugin.compose'
-    id("com.google.gms.google-services")
 }
 
 android {
@@ -14,8 +13,8 @@ android {
         applicationId = "com.casahealth.homehealth"
         minSdk = 24          // Android 7.0 — covers ~99% of active devices
         targetSdk = 36
-        versionCode = 17
-        versionName = "2.3.7"
+        versionCode = 23
+        versionName = "Apple1.0"
 
         ndk {
             // arm64-v8a  — all modern Samsung, Motorola, Pixel (Snapdragon / Exynos / Tensor)
@@ -92,21 +91,8 @@ dependencies {
     // Works on any device with OpenGL ES 3.1 or Vulkan 1.0 (declared in AndroidManifest).
     implementation 'io.github.sceneview:sceneview:4.16.0'
 
-    // ARSceneView — camera-based AR with ARCore anchoring.
-    // Uncomment when implementing the "Scan Room" feature. Requires:
-    //   • CAMERA permission in AndroidManifest
-    //   • android.hardware.camera.ar feature (optional) for Play Store filtering
-    //   • meta-data com.google.ar.core = optional
-    // implementation 'io.github.sceneview:arsceneview:4.16.2'
-
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.3.0'
-
-    // Import the Firebase BoM
-    implementation(platform("com.google.firebase:firebase-bom:34.15.0"))
-    // TODO: Add the dependencies for Firebase products you want to use
-    // When using the BoM, don't specify versions in Firebase dependencies
-    implementation("com.google.firebase:firebase-analytics")
 
     // Google Play Billing
     implementation 'com.android.billingclient:billing-ktx:9.1.0'

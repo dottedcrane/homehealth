@@ -25,6 +25,7 @@ kotlin {
 
                 // HomeDatabase extends RoomDatabase and DAOs are called directly by :app.
                 api 'androidx.room:room-runtime:2.8.4'
+                api 'androidx.sqlite:sqlite-bundled:2.7.0'
 
                 // UserHomeDao exposes Flow<...> in its public method signatures
                 api 'org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0'

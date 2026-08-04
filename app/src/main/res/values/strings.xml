@@ -1,14 +1,5 @@
 <resources>
+    <!-- The only string resource the app uses: every other label is Compose-side.
+         Referenced from AndroidManifest's android:label. -->
     <string name="app_name">HomeHealth</string>
-    <string name="title_home_type">Initialize Home Type</string>
-    <string name="label_style">Style</string>
-    <string name="label_size">Size</string>
-    <string name="label_floors">Floors</string>
-    <string name="label_layout">Layout</string>
-    <string name="btn_scan_room">Scan Room</string>
-    <string name="btn_lock_room">Lock Room</string>
-    <string name="status_no_planes">Point camera at walls and floor</string>
-    <string name="status_scanning">Scanning… %1$d wall(s) detected</string>
-    <string name="status_locked">Room locked — %1$d wall(s), floor found</string>
-    <string name="status_no_permission">Camera permission required for scanning</string>
 </resources>

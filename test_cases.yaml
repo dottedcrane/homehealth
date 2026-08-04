@@ -92,18 +92,81 @@ tests:
           The furniture item appears inside the room at the dropped position
           and tapping it shows rotate, flip, and remove controls.
 
+  - displayName: See Only Room-Relevant Items in the Tray
+    id: room-relevant-furniture-tray
+    steps:
+      - goal: See Only Room-Relevant Items in the Tray
+        hint: >-
+          step into the Kitchen and look at the furniture tray, then go back
+          and step into a Bathroom and compare.
+        finalScreenAssertion: >-
+          The Kitchen tray offers counter, fridge, stove, sink, dishwasher,
+          microwave, oven, range hood, dining set and treasure — with no bed
+          or bathtub — while the Bathroom tray offers toilet, bathtub, vanity,
+          washer, dryer and water heater.
+
+  - displayName: A Room Only Fits What It Has Space For
+    id: room-item-capacity-cap
+    steps:
+      - goal: A Room Only Fits What It Has Space For
+        hint: >-
+          step into the smallest Bedroom and drag a Bed in from the tray, then
+          try to drag a second Bed in. Go back and repeat in the largest
+          Bedroom.
+        finalScreenAssertion: >-
+          In the small bedroom the Bed icon dims and shows a count badge after
+          one bed, and a second cannot be dragged in; the large bedroom accepts
+          three beds before its Bed icon dims. Every tray icon shows a count
+          badge for what the room already holds.
+
+  - displayName: Every Room Fits One of Each of Its Items
+    id: room-first-item-always-fits
+    steps:
+      - goal: Every Room Fits One of Each of Its Items
+        hint: >-
+          step into the smallest Powder Room, which is too small to hold two
+          fixtures, and drag in both a Toilet and a Vanity.
+        finalScreenAssertion: >-
+          Both fixtures are placed successfully — the size limit never blocks
+          the first of an item, only duplicates.
+
+  - displayName: Removing an Item Frees Up Its Tray Icon
+    id: removing-item-frees-tray-icon
+    steps:
+      - goal: Removing an Item Frees Up Its Tray Icon
+        hint: >-
+          step into the Kitchen, note the dimmed Fridge icon with its count
+          badge, then drag the fridge out through a wall to remove it.
+        finalScreenAssertion: >-
+          The Fridge tray icon immediately brightens and loses its count badge,
+          and a new fridge can be dragged in again.
+
+  - displayName: Find an Unusual Item with All Items
+    id: tray-all-items-expander
+    steps:
+      - goal: Find an Unusual Item with All Items
+        hint: >-
+          step into a Bedroom, note that the tray has no bathtub, then tap the
+          "All items" button at the end of the tray.
+        finalScreenAssertion: >-
+          The tray expands to reveal the remaining items including the bathtub,
+          which can then be dragged into the bedroom normally; leaving the room
+          and returning collapses the tray back to its relevant items.
+
   - displayName: Add a Pool or Deck to the Lot
     id: add-a-pool-or-deck-to-the-lot
     steps:
       - goal: Add a Pool or Deck to the Lot
         hint: >-
-          in the Exterior view, open the Home features pane and tap a feature
-          such as Pool or Deck to place it; tapping again cycles which side of
-          the house it sits on (Front/Right/Back/Left) and the last tap
-          removes it.
+          in the Exterior view, long-press the Pool or Deck icon in the tray
+          and drag it onto the yard to place it. Tap the placed feature to
+          open its actions bar: Remove it, or (Pool only) tap the rotate icon
+          to cycle which side of the house it sits on. The Deck always spans
+          the full width of the back wall.
         finalScreenAssertion: >-
-          The chosen feature is visible on the lot next to the house on the
-          selected side.
+          The chosen feature is visible on the lot next to the house — the
+          pool on whichever side it was dropped or rotated to, the deck along
+          the full back wall.
 
   - displayName: Mark a Home System as Installed
     id: mark-a-home-system-as-installed
@@ -115,6 +178,320 @@ tests:
         finalScreenAssertion: >-
           The system appears on the house (solar panels on the roof or an HVAC
           unit), and tapping it opens its maintenance card.
+
+  - displayName: Spot Due Maintenance from Inside a Room
+    id: room-pane-maintenance-strip
+    steps:
+      - goal: Spot Due Maintenance from Inside a Room
+        hint: >-
+          step into the Kitchen and look at the strip of appliance icons
+          directly below the pane's header, then compare with the Laundry
+          room and a Bedroom.
+        finalScreenAssertion: >-
+          The Kitchen shows colored fridge and dishwasher icons, the Laundry
+          shows washer, dryer and water heater, and the Bedroom shows no strip
+          at all. On a newly claimed home every icon is amber ("never done"),
+          not red.
+
+  - displayName: Open a Maintenance Card in One Tap
+    id: one-tap-maintenance-card
+    steps:
+      - goal: Open a Maintenance Card in One Tap
+        hint: >-
+          in the Kitchen, tap the colored fridge icon in the maintenance strip
+          at the top of the pane.
+        finalScreenAssertion: >-
+          The fridge's maintenance card opens immediately with its install
+          year, documents and lifespan — no hub, no Score tab, no scrolling.
+
+  - displayName: See Why an Appliance Needs Attention
+    id: card-shows-due-tasks
+    steps:
+      - goal: See Why an Appliance Needs Attention
+        hint: >-
+          open the fridge's maintenance card from the room pane's strip and
+          look at its Tasks section, then tap the check button next to
+          "Clean Refrigerator Coils" and go back to the room.
+        finalScreenAssertion: >-
+          The Tasks section lists the built-in task with a due label such as
+          "Annual - Not done yet"; after marking it done the label turns green
+          and the fridge icon in the room pane's strip is now green.
+
+  - displayName: Check Vehicle and Door Upkeep in the Garage
+    id: garage-pane-maintenance-strip
+    steps:
+      - goal: Check Vehicle and Door Upkeep in the Garage
+        hint: >-
+          park a car, then enter the Garage view and look at the strip of
+          colored icons between the camera gear and the vehicle drag tray.
+        finalScreenAssertion: >-
+          Colored icons appear for the parked car and the garage door; tapping
+          the car icon opens that vehicle's maintenance card directly. The
+          plain vehicle drag icons remain further along the pane, visually
+          distinct from the colored status icons.
+
+  - displayName: Check Mechanical Systems in the Attic
+    id: attic-pane-maintenance-strip
+    steps:
+      - goal: Check Mechanical Systems in the Attic
+        hint: >-
+          place HVAC and solar on the home from the Exterior view, then tap
+          the Attic icon in the Exterior pane and look at the pane's strip.
+        finalScreenAssertion: >-
+          The attic opens as a room view, carrying the room pane rather than a
+          pane of its own. Colored icons appear for HVAC, ductwork, attic
+          insulation, solar and the EV battery, ordered worst-status first;
+          tapping any of them opens that system's maintenance card. Systems
+          marked "not in my home" are absent from the strip.
+
+  - displayName: Reach the Attic from Anywhere in the Home
+    id: attic-entry-points
+    steps:
+      - goal: Reach the Attic from Anywhere in the Home
+        hint: >-
+          tap the Attic icon in the Exterior pane and press Back; open the
+          Floor Plan, tap its Attic icon and press Back; step into a bedroom,
+          tap the Attic icon in the room pane and press Back.
+        finalScreenAssertion: >-
+          Each route opens the same attic, and Back returns to whichever scene
+          it was entered from - the Exterior, the Floor Plan, and that specific
+          bedroom. The attic's own pane offers no Attic icon, and its camera
+          angles are Side and Top only (no Eye).
+
+  - displayName: Switch the Attic to a Utility Closet
+    id: attic-type-utility-closet
+    steps:
+      - goal: Switch the Attic to a Utility Closet
+        hint: >-
+          claim The Classic, open the attic, tap the bare attic floor (the
+          wide boarded walkway between the insulation batts), choose Utility Closet
+          and Save. Then open the maintenance hub's To-Do list.
+        finalScreenAssertion: >-
+          The attic becomes a small cupboard holding only the air handler - no
+          rafters, ducts or insulation batts. The pane still lists HVAC,
+          Ductwork and Insulation in its row, still status-colored, and the
+          To-Do list still contains "Inspect Ductwork for Leaks" and "Check
+          Attic Insulation & Ventilation". Choosing a closet removes no task.
+
+  - displayName: Declare That a Home Has No Ductwork
+    id: attic-asset-not-in-my-home
+    steps:
+      - goal: Declare That a Home Has No Ductwork
+        hint: >-
+          in the attic, tap the Ductwork icon in the pane's row to dim it, then
+          check the maintenance hub's To-Do list and Inventory tab, then tap it
+          back on.
+        finalScreenAssertion: >-
+          Dimming Ductwork removes its status icon from the strip, drops
+          "Inspect Ductwork for Leaks" from the To-Do list, moves Ductwork to
+          "Available to Add" in Inventory, and - in a full attic - removes the
+          duct trunk and branch runs from the scene while the joists and
+          insulation stay. Tapping it back on restores all of it, with any
+          completion history intact.
+
+  - displayName: Give a Condo a Full Attic
+    id: condo-full-attic
+    steps:
+      - goal: Give a Condo a Full Attic
+        hint: >-
+          claim The Penthouse, open the attic, tap its floor and choose Attic.
+        finalScreenAssertion: >-
+          The space becomes the home's whole footprint with floor joists and
+          insulation batts between them, but NO rafters or ridge beam - a flat
+          roof has no gable for them to belong to. Ductwork and Attic Insulation
+          become available, and their tasks appear in the To-Do list.
+
+  - displayName: Stash a Keepsake in the Attic
+    id: attic-treasure
+    steps:
+      - goal: Stash a Keepsake in the Attic
+        hint: >-
+          in the attic, long-press the Treasure icon in the tray and drag it
+          into the space; then open the Floor Plan, delete a room, and return
+          to the attic.
+        finalScreenAssertion: >-
+          The treasure lands on the attic floor (resting on the boards, not
+          floating above them), can be tapped for its actions bar, and appears
+          under "Custom" in the hub's Inventory. It is still in the attic after
+          the room downstairs is deleted, and after the app is relaunched.
+
+  - displayName: Keep Things in an Attached Garage
+    id: garage-contents-attached-wing
+    steps:
+      - goal: Keep Things in an Attached Garage
+        hint: >-
+          claim The Estate (or The Ranch), walk onto the driveway, and look at
+          the tray; long-press the Water Heater and drag it into the garage,
+          then do the same with a Treasure.
+        finalScreenAssertion: >-
+          The tray offers the full garage set - vehicles plus water heater,
+          fridge, washer, dryer, sink, gym gear and Treasure - not vehicles
+          alone. Both items come to rest INSIDE the garage rather than out on
+          the driveway, are visible through the see-through shell, can be tapped
+          for their actions bar, and are still there after a relaunch.
+
+      - goal: Maintain What's in the Garage
+        hint: >-
+          with a water heater in the garage, look at the driveway pane's colored
+          strip, then open the maintenance hub while still on the driveway.
+        finalScreenAssertion: >-
+          The water heater has a status-colored icon in the strip beside the
+          vehicles and the garage door, and tapping it opens its maintenance
+          card. The hub's To-Do list, scoped to "Garage", lists the water
+          heater's tasks alongside the vehicle and garage-door ones.
+
+      - goal: The Garage Bounds How Much Fits
+        hint: >-
+          keep dragging items into the garage until the tray icons dim, then
+          drag another vehicle onto the driveway and look at the tray again.
+        finalScreenAssertion: >-
+          Capacity is measured against the garage's own floor, not the driveway
+          - parking another car outside does not make room for another item
+          inside, and the icons stay dimmed.
+
+  - displayName: One Garage, Seen From Both Sides
+    id: garage-contents-shared-with-room
+    steps:
+      - goal: One Garage, Seen From Both Sides
+        hint: >-
+          claim The Townhouse (or The Classic, whose garage is a room in the
+          floor plan), drop a water heater into the garage from the driveway,
+          then open the floor plan and step into the Garage room.
+        finalScreenAssertion: >-
+          The water heater is in the garage room, in the same spot - one object
+          seen from two sides, not a second copy. Moving it inside the room
+          moves it as seen from the driveway too, and vice versa.
+
+  - displayName: See Into the Garage From Outside
+    id: garage-shell-translucent
+    steps:
+      - goal: See Into the Garage From Outside
+        hint: >-
+          with a car parked inside the garage and a water heater beside it, go
+          to the Exterior view and look at the garage, then tap its door.
+        finalScreenAssertion: >-
+          The garage shell is translucent, so the car and the water heater are
+          both visible inside it from outside the house. The door itself stays
+          solid, and tapping it still walks onto the driveway.
+
+  - displayName: Deleting a Room Doesn't Delete Your Things
+    id: orphan-rescue-on-room-delete
+    steps:
+      - goal: Deleting a Room Doesn't Delete Your Things
+        hint: >-
+          put a Treasure in a bedroom and attach a document (or set an install
+          year) on a water heater in the laundry; then open the floor plan and
+          delete both rooms.
+        finalScreenAssertion: >-
+          Neither item is lost. The water heater is moved into the garage (a
+          garage can hold one), the Treasure goes to the garage too if the home
+          has one and to the attic otherwise, and both keep their install year
+          and attached documents. Ordinary furniture in those rooms - a sofa
+          with nothing recorded against it - is removed as before.
+
+      - goal: Your Things Survive a Model Switch
+        hint: >-
+          with a keepsake in the attic, a water heater in the garage, and a
+          document attached to something in a room the next model won't have,
+          claim a different model from the neighborhood.
+        finalScreenAssertion: >-
+          The attic keepsake and the garage water heater are still there, inside
+          the NEW home's attic and garage. Anything with tracked history that the
+          new model has no equivalent for is re-homed rather than dropped, and
+          every item's install year and documents are still attached to it.
+
+  - displayName: No Second Garage for a Home That Already Has One
+    id: no-redundant-garage-offer
+    steps:
+      - goal: No Second Garage for a Home That Already Has One
+        hint: >-
+          claim The Classic (whose floor plan already contains a Garage room)
+          and look at the Exterior pane's tray; then claim The Ranch and look
+          again; then on a home with neither, add a Garage room in the floor
+          plan and look once more.
+        finalScreenAssertion: >-
+          The Classic's tray offers no Garage icon - it already parks in its
+          interior bay. The Ranch shows its placed garage and can still cycle it
+          to another wall. A home that gains a Garage room in the floor plan
+          stops being offered an attached one from then on.
+
+  - displayName: Vehicles Are Added from the Garage, Not the Exterior
+    id: vehicles-only-from-garage
+    steps:
+      - goal: Vehicles Are Added from the Garage, Not the Exterior
+        hint: >-
+          on a home that has a garage (for example The Classic), look at the
+          Exterior pane's tray, then enter the Garage view and look at its
+          tray.
+        finalScreenAssertion: >-
+          The Exterior tray shows only yard and system features (deck, pool,
+          HVAC, solar, EV battery, trees) with no car, boat or motorcycle
+          icons; the Garage view's tray still offers all three vehicles.
+
+  - displayName: Enter the Garage from the Exterior Pane
+    id: garage-icon-entry-point
+    steps:
+      - goal: Enter the Garage from the Exterior Pane
+        hint: >-
+          in the Exterior view, tap the Garage icon in the pane (next to the
+          Attic icon), then use the Back arrow.
+        finalScreenAssertion: >-
+          The Garage view opens with its door rolling up, and Back returns to
+          the Exterior. The icon is present on every home style, including the
+          garage door tap that already worked on homes with a garage.
+
+  - displayName: Park a Vehicle at a Condo
+    id: condo-garage-and-vehicles
+    steps:
+      - goal: Park a Vehicle at a Condo
+        hint: >-
+          claim the Penthouse (a CONDO, which has neither a garage feature nor
+          a garage room), then from its Exterior view tap the Garage icon in
+          the pane and drag a car from the tray onto the lot.
+        finalScreenAssertion: >-
+          The Garage view opens for the condo and the car parks successfully;
+          it then appears in the garage's maintenance strip and in the
+          Maintenance hub's Vehicles section.
+
+  - displayName: Switching a Car to Electric Changes Its Tasks
+    id: ev-swaps-vehicle-tasks
+    steps:
+      - goal: Switching a Car to Electric Changes Its Tasks
+        hint: >-
+          park a car, open the Maintenance To-Do list and note its tasks, then
+          tap the car, use the gas/electric toggle in its actions bar to make
+          it electric, and reopen the To-Do list.
+        finalScreenAssertion: >-
+          "Car: Oil & Filter Change" and "Car: Check Battery & Fluids" are
+          replaced by "Car: EV Battery & Charging Check" and "Car: Brake Fluid
+          & Caliper Service"; the shared tasks (Rotate Tires, Annual Service)
+          are unchanged and keep their completion dates.
+
+  - displayName: Two Cars Keep Separate Task Lists
+    id: per-vehicle-task-independence
+    steps:
+      - goal: Two Cars Keep Separate Task Lists
+        hint: >-
+          park two cars, switch only the second one to electric, then open the
+          Maintenance To-Do list and mark the first car's oil change done.
+        finalScreenAssertion: >-
+          Tasks are labelled "Car 1: …" and "Car 2: …"; only Car 1 lists an oil
+          change and only Car 2 lists the EV battery check. Marking Car 1's oil
+          change done leaves Car 2's tasks untouched, and each car's icon in
+          the garage maintenance strip shows its own status colour.
+
+  - displayName: Existing Vehicle Task History Survives the Update
+    id: vehicle-task-history-migration
+    steps:
+      - goal: Existing Vehicle Task History Survives the Update
+        hint: >-
+          on a build predating per-vehicle tasks, mark "Car: Rotate Tires &
+          Check Pressure" done, then install this build and reopen the To-Do
+          list.
+        finalScreenAssertion: >-
+          The first car's Rotate Tires task still shows the completion date it
+          had before the update (not "Not done yet"), confirming the v7 re-key
+          moved the history onto that vehicle.
 
   - displayName: Track an Appliance's Install Year and Lifespan
     id: track-appliance-install-year-and-lifespan
@@ -140,36 +517,55 @@ tests:
           The attached document is listed under Documents & Warranties in the
           appliance's maintenance card.
 
-  - displayName: Park a Car in the Garage
-    id: park-a-car-in-the-garage
+  - displayName: Park a Car on the Driveway
+    id: park-a-car-on-the-driveway
     steps:
-      - goal: Park a Car in the Garage
+      - goal: Park a Car on the Driveway
         hint: >-
-          in the Exterior view, long-press the car icon in the Vehicles pane
-          and drag it onto the garage — the car parks inside (the garage holds
-          one vehicle; other vehicles land on the driveway).
+          tap the Garage icon in the Exterior pane to walk onto the driveway,
+          then long-press the car icon in its tray and drag it onto the garage
+          — the car parks inside (the garage holds one vehicle; other vehicles
+          land on the driveway).
         finalScreenAssertion: >-
-          The car is parked in the garage, and tapping it opens its actions
-          bar (paint color, gas/electric, Track, Remove).
+          The driveway opens as a room view — same pane, camera presets and
+          maintenance strip as any room, with a vehicles-only tray — the car is
+          parked in the garage, and tapping it opens its actions bar (paint
+          color, gas/electric, Track, Remove).
 
-  - displayName: Open the Garage and Operate the Door
-    id: open-the-garage-and-operate-the-door
+  - displayName: Operate the Garage Door and Close It Again
+    id: operate-the-garage-door
     steps:
-      - goal: Open the Garage and Operate the Door
+      - goal: Operate the Garage Door and Close It Again
         hint: >-
-          in the Exterior view, tap the garage door to enter the Garage view,
-          then tap the overhead door to close and open it.
+          in the Exterior view, tap the garage door to walk onto the driveway,
+          wait for the door to roll open, then close it again WITHOUT moving
+          the camera.
         finalScreenAssertion: >-
-          The Garage view is shown, the overhead door animates open and
-          closed, and a parked car rolls in and out with it.
+          The door animates open with a parked car rolling out with it, and
+          while open a lip of the door is still visible along the top of the
+          opening — tapping that lip closes it again and rolls the car back in.
+
+  - displayName: The Same Car, from Every Scene
+    id: the-same-car-from-every-scene
+    steps:
+      - goal: The Same Car, from Every Scene
+        hint: >-
+          park a car halfway down the driveway, then look at it from the
+          Exterior, the Floor Plan, and from inside a room of the house
+          (including the Garage room if the home has one).
+        finalScreenAssertion: >-
+          The car is in the same real-world spot in all of them — outside the
+          house on the driveway, seen through the walls from inside — and
+          outside the driveway view it can't be tapped or dragged, while taps
+          on the room around it still work.
 
   - displayName: Remove a Vehicle from the Lot
     id: remove-a-vehicle-from-the-lot
     steps:
       - goal: Remove a Vehicle from the Lot
         hint: >-
-          in the Exterior view, long-press a placed vehicle and drag it to the
-          street end of the driveway to remove it.
+          on the driveway, long-press a placed vehicle and drag it to the
+          street end to remove it.
         finalScreenAssertion: >-
           The vehicle disappears from the lot and no longer appears in the
           Vehicles section of the Score tab in the Maintenance Hub.
@@ -254,6 +650,145 @@ tests:
         finalScreenAssertion: >-
           The camera returns to its default position and the settings dialog
           closes.
+
+  - displayName: Add a Pantry Beside the Kitchen
+    id: add-a-pantry-beside-the-kitchen
+    steps:
+      - goal: Add a Pantry Beside the Kitchen
+        hint: >-
+          in the Floor Plan view, enter edit mode and select a small footprint
+          of two tiles directly touching the Kitchen (one tile wide by two
+          deep), then tap Create Room.
+        finalScreenAssertion: >-
+          Pantry is offered in the room-type picker even at that two-tile size,
+          and the created pantry's door opens into the Kitchen rather than
+          onto the hallway.
+
+  - displayName: Walk Into the Master Suite
+    id: walk-into-the-master-suite
+    steps:
+      - goal: Walk Into the Master Suite
+        hint: >-
+          claim The Townhouse (or The Estate or The Classic), open the Floor
+          Plan on the bedroom floor and look at the master bedroom's walls.
+        finalScreenAssertion: >-
+          The master bedroom has a door into its own bathroom and another into
+          its walk-in closet, neither of which opens onto the hallway or
+          landing; the other bedrooms each show a door into their own closet.
+
+  - displayName: Enter a Furnished Home Theater
+    id: enter-a-furnished-home-theater
+    steps:
+      - goal: Enter a Furnished Home Theater
+        hint: >-
+          claim a home with a theater (The Classic, The Estate, or The
+          Townhouse's top floor), then tap the Theater room in the Floor Plan
+          to step inside.
+        finalScreenAssertion: >-
+          The room is already furnished — a screen against the back wall with a
+          sofa and two chairs in rows facing it — instead of an empty floor,
+          and the tray offers sofas, chairs and screens.
+
+  - displayName: See the Rest of the Home from Inside a Room
+    id: see-rest-of-home-from-inside-a-room
+    steps:
+      - goal: See the Rest of the Home from Inside a Room
+        hint: >-
+          in the Floor Plan view, step into the Kitchen and drag to orbit the
+          camera, then go back and step into a bedroom and orbit there too.
+        finalScreenAssertion: >-
+          In both rooms the rest of that floor is visible around the room you
+          entered — every other room at its true position with knee-high walls
+          and its furniture in ghosted outline, inside the home's outer
+          boundary — while the room itself renders in full colour as before.
+
+  - displayName: See the Neighborhood from Inside a Room
+    id: see-neighborhood-from-inside-a-room
+    steps:
+      - goal: See the Neighborhood from Inside a Room
+        hint: >-
+          step into a ground-floor room and orbit the camera, then go back and
+          step into a room on an upper floor and orbit there too.
+        finalScreenAssertion: >-
+          The room's walls are see-through: past them are the surrounding
+          rooms, then the lawn, the road, the park and the model homes on their
+          lots. From the upper-floor room the neighborhood sits a storey below,
+          so you look down on it.
+
+  - displayName: The Room Backdrop Is Not Interactive
+    id: room-backdrop-is-not-interactive
+    steps:
+      - goal: The Room Backdrop Is Not Interactive
+        hint: >-
+          from inside any room, tap a surrounding room's floor, its low wall,
+          one of its ghosted furniture pieces, and one of the model homes out
+          in the neighborhood; then tap the floor of the room you're actually
+          in, and long-press-drag a tray item onto one of the surrounding rooms.
+        finalScreenAssertion: >-
+          Taps on the surrounding rooms, their ghosted furniture and the
+          neighborhood beyond do nothing at all — no card, no selection, and no
+          jump to a home preview — while tapping the real room's floor still
+          opens its room options, and the dropped item lands inside the real
+          room rather than where it was released.
+
+  - displayName: The Street Around the Exterior and Floor Plan
+    id: street-around-exterior-and-floor-plan
+    steps:
+      - goal: The Street Around the Exterior and Floor Plan
+        hint: >-
+          in the Exterior view, orbit around your claimed home; then step
+          inside to the Floor Plan and switch between F1 and F2.
+        finalScreenAssertion: >-
+          The road, park and neighbouring homes surround the house in the
+          Exterior view and the plan in the Floor Plan view; tapping a model
+          home from either does nothing, dragging yard features still places
+          them where released, and on F2 the neighborhood sits a storey below
+          the plan.
+
+  - displayName: Inspect the Attic Ducts and Insulation
+    id: inspect-attic-ducts-and-insulation
+    steps:
+      - goal: Inspect the Attic Ducts and Insulation
+        hint: >-
+          from the Exterior view of a house or townhouse, tap the Attic icon
+          in the pane, then tap a duct run and the insulation. Orbit the camera
+          before leaving.
+        finalScreenAssertion: >-
+          The attic shows rafters, joists and a framed gable end at the far
+          wall - stepped studs on a sole plate running up to sloping top chords,
+          open between them - with insulation batts covering the floor either
+          side of a wide boarded centre walkway, and a duct trunk with branch
+          runs off the air handler. Tapping a duct opens the Ductwork card and
+          tapping the insulation opens the Attic Insulation card. Orbiting round
+          BEHIND the air handler still shows it clearly through the gable
+          framing, and shows the street and neighboring homes far below.
+
+  - displayName: Stand on the Neighborhood Green
+    id: stand-on-the-neighborhood-green
+    steps:
+      - goal: Stand on the Neighborhood Green
+        hint: >-
+          in the Neighborhood view, tap the camera gear icon and choose the
+          Eye angle, then drag to turn on the spot.
+        finalScreenAssertion: >-
+          The view drops to ground level on the park in the middle of the
+          neighborhood; turning brings every home into view FACING you — garage
+          doors, porches and window shutters rather than plain blocks — each
+          with a walkway running from its front door to the park, and the main
+          road visible looping behind them.
+
+  - displayName: The Road Loops Around the Homes
+    id: road-loops-around-the-homes
+    steps:
+      - goal: The Road Loops Around the Homes
+        hint: >-
+          in the Neighborhood view, switch the camera to the Top angle and look
+          at the whole layout.
+        finalScreenAssertion: >-
+          The park sits in the centre with the homes ringed around it and their
+          walkways leading in; the main road forms a loop outside all of them
+          with spurs running off to the edges of the map, and no road crosses
+          the green.
 
   - displayName: View Contextual Help
     id: view-contextual-help

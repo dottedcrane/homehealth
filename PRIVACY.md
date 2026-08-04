@@ -1,6 +1,6 @@
 # Privacy Policy — Casa Health
 
-**Effective: July 11, 2026**
+**Effective: July 29, 2026**
 
 Casa Health is an offline home-maintenance tracker. The short version: **there is no account,
 no server, no analytics, and no data collection.** Everything you enter stays in the app's
@@ -25,6 +25,7 @@ All of the following lives in a local database in the app's private internal sto
 - Per-item install years for appliances, fixtures, structural assets, and vehicles.
 - Task completion dates ("Mark Done" timestamps) used to compute the next seasonal due date
   and the green/amber/red upkeep status.
+- Per-task snooze and mute state, set from a task's detail popup in the To-Do tab.
 - Which items you've marked "not in my home."
 
 **Documents you attach**

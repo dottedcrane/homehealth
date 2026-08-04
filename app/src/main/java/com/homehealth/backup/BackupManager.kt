@@ -3,11 +3,9 @@ package com.homehealth.backup
 import android.content.Context
 import android.net.Uri
 import com.homehealth.db.DocumentEntity
-import com.homehealth.db.HomeDatabase
+import com.homehealth.db.HomeDatabaseFactory
 import com.homehealth.db.UserHomeDao
 import com.homehealth.db.UserHomeEntity
-import com.homehealth.db.closeInstance
-import com.homehealth.db.getInstance
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -68,10 +66,10 @@ class BackupManager(private val context: Context) {
         val dateStr = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.US).format(Date())
         val attachmentMap = mutableMapOf<String, MutableList<String>>()
 
-        // Flush the WAL into the main db file so the copy below is a consistent snapshot —
-        // query() (not execSQL()) since this pragma returns a result row.
-        HomeDatabase.getInstance(context).openHelper.writableDatabase
-            .query("PRAGMA wal_checkpoint(FULL)").use { it.moveToFirst() }
+        // Flush the WAL into the main db file so the copy below is a consistent snapshot.
+        HomeDatabaseFactory.getInstance(context).userHomeDao().rawQuery(
+            androidx.room.RoomRawQuery("PRAGMA wal_checkpoint(FULL)")
+        )
 
         ZipOutputStream(outputStream.buffered()).use { zos ->
             zos.setMethod(ZipOutputStream.DEFLATED)
@@ -142,7 +140,7 @@ class BackupManager(private val context: Context) {
                 return@withContext RestoreResult(false, 0, "Not a valid backup file")
             }
 
-            HomeDatabase.closeInstance()
+            HomeDatabaseFactory.closeInstance()
 
             val dbFile = context.getDatabasePath("home_health.db")
             dbFile.parentFile?.mkdirs()

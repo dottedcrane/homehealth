@@ -1,66 +1,12 @@
 {
   "formatVersion": 1,
   "database": {
-    "version": 10,
-    "identityHash": "e90047f2a9a24b47bbc4afb09cf40c0e",
+    "version": 1,
+    "identityHash": "74ad87c54b32e6d1ba0e72677977a5f1",
     "entities": [
       {
-        "tableName": "home_models",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `style` TEXT NOT NULL, `size` TEXT NOT NULL, `floors` TEXT NOT NULL, `layout` TEXT NOT NULL, `createdAt` INTEGER NOT NULL, PRIMARY KEY(`id`))",
-        "fields": [
-          {
-            "fieldPath": "id",
-            "columnName": "id",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "name",
-            "columnName": "name",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "style",
-            "columnName": "style",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "size",
-            "columnName": "size",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "floors",
-            "columnName": "floors",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "layout",
-            "columnName": "layout",
-            "affinity": "TEXT",
-            "notNull": true
-          },
-          {
-            "fieldPath": "createdAt",
-            "columnName": "createdAt",
-            "affinity": "INTEGER",
-            "notNull": true
-          }
-        ],
-        "primaryKey": {
-          "autoGenerate": false,
-          "columnNames": [
-            "id"
-          ]
-        }
-      },
-      {
         "tableName": "user_home",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `homeStyle` TEXT NOT NULL, `featurePlacementsJson` TEXT NOT NULL, `featureOffsetsJson` TEXT NOT NULL, `placedDecksJson` TEXT NOT NULL, `homeSystemsJson` TEXT NOT NULL, `floorLayoutJson` TEXT NOT NULL, `itemOffsetsJson` TEXT NOT NULL, `placedItemsJson` TEXT NOT NULL, `removedInstancesJson` TEXT NOT NULL, `buildYear` INTEGER, `purchaseYear` INTEGER, `label` TEXT NOT NULL, `neighborKey` TEXT NOT NULL, `savedAt` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `homeStyle` TEXT NOT NULL, `featurePlacementsJson` TEXT NOT NULL, `featureOffsetsJson` TEXT NOT NULL, `placedDecksJson` TEXT NOT NULL, `hvacPlacementJson` TEXT NOT NULL, `evBatteryPlacementJson` TEXT NOT NULL, `solarArrayPlacementJson` TEXT NOT NULL, `placedYardDecorJson` TEXT NOT NULL, `customAppliancesJson` TEXT NOT NULL, `customTasksJson` TEXT NOT NULL, `floorLayoutJson` TEXT NOT NULL, `itemOffsetsJson` TEXT NOT NULL, `placedItemsJson` TEXT NOT NULL, `removedInstancesJson` TEXT NOT NULL, `atticType` TEXT NOT NULL, `buildYear` INTEGER, `purchaseYear` INTEGER, `label` TEXT NOT NULL, `neighborKey` TEXT NOT NULL, `savedAt` INTEGER NOT NULL, PRIMARY KEY(`id`))",
         "fields": [
           {
             "fieldPath": "id",
@@ -93,8 +39,38 @@
             "notNull": true
           },
           {
-            "fieldPath": "homeSystemsJson",
-            "columnName": "homeSystemsJson",
+            "fieldPath": "hvacPlacementJson",
+            "columnName": "hvacPlacementJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "evBatteryPlacementJson",
+            "columnName": "evBatteryPlacementJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "solarArrayPlacementJson",
+            "columnName": "solarArrayPlacementJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "placedYardDecorJson",
+            "columnName": "placedYardDecorJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "customAppliancesJson",
+            "columnName": "customAppliancesJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "customTasksJson",
+            "columnName": "customTasksJson",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -119,6 +95,12 @@
           {
             "fieldPath": "removedInstancesJson",
             "columnName": "removedInstancesJson",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "atticType",
+            "columnName": "atticType",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -244,7 +226,7 @@
       },
       {
         "tableName": "task_records",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`taskKey` TEXT NOT NULL, `homeId` INTEGER NOT NULL, `lastCompleted` INTEGER NOT NULL, PRIMARY KEY(`taskKey`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`taskKey` TEXT NOT NULL, `homeId` INTEGER NOT NULL, `lastCompleted` INTEGER NOT NULL, `snoozedUntil` INTEGER NOT NULL, `muted` INTEGER NOT NULL, PRIMARY KEY(`taskKey`))",
         "fields": [
           {
             "fieldPath": "taskKey",
@@ -261,6 +243,18 @@
           {
             "fieldPath": "lastCompleted",
             "columnName": "lastCompleted",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "snoozedUntil",
+            "columnName": "snoozedUntil",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "muted",
+            "columnName": "muted",
             "affinity": "INTEGER",
             "notNull": true
           }
@@ -335,7 +329,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e90047f2a9a24b47bbc4afb09cf40c0e')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '74ad87c54b32e6d1ba0e72677977a5f1')"
     ]
   }
 }

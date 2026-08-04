@@ -2,8 +2,11 @@ package com.homehealth.renderspec
 
 import com.homehealth.model.FeatureSide
 import com.homehealth.model.FloorLayout
+import com.homehealth.model.HomeFeature
 import com.homehealth.model.PlacedItem
 import com.homehealth.model.RoomItem
+import com.homehealth.model.RoomType
+import com.homehealth.model.RoomZone
 import kotlin.math.abs
 
 /**
@@ -154,6 +157,26 @@ object CarLotGeometry {
         return settled
     }
 
+    // How much driveway DEPTH (garage door → street) is needed to fit every vehicle, packing
+    // them side by side across the lot's own width before adding another row — matches how
+    // freeDrivewaySlot's grid search actually fills (width first, then depth), so the lot only
+    // grows once vehicles genuinely no longer fit shoulder to shoulder, not the moment a 3rd
+    // vehicle appears while there's still room beside the first two. Never shrinks below the
+    // historical fixed run, so a home with few vehicles (or one already-wide-enough lot)
+    // renders exactly as before.
+    private const val BASE_DRIVEWAY_RUN = 7.5f
+    private const val VEHICLE_GAP = 0.25f
+    private fun neededDrivewayRun(vehicles: List<RoomItem>, laneWidth: Float): Float {
+        if (vehicles.isEmpty()) return BASE_DRIVEWAY_RUN
+        // Conservative per-row count: uses the widest vehicle present so a boat in the mix
+        // never gets estimated more rows of room than it actually needs.
+        val widestVehicle = vehicles.maxOf { vehicleWid(it) }
+        val perRow = maxOf(1, ((laneWidth + VEHICLE_GAP) / (widestVehicle + VEHICLE_GAP)).toInt())
+        val rows = (vehicles.size + perRow - 1) / perRow
+        val rowDepth = vehicles.maxOf { vehicleLen(it) } + VEHICLE_GAP
+        return maxOf(BASE_DRIVEWAY_RUN, rows * rowDepth + 1.0f)
+    }
+
     // The garage's anchor/footprint always comes from HouseSceneGeometry.garageBox — the same
     // source of truth the shell renderer reads from — instead of re-deriving an equivalent
     // formula independently. That duplication (this function once had its own copy of the
@@ -163,31 +186,80 @@ object CarLotGeometry {
     // Shared by every attached-garage lot (HOUSE's LEFT/RIGHT/FRONT and TOWNHOUSE's real
     // interior-room box below) — a box plus which way (if any) to tighten the inner margin so
     // the pad doesn't overhang back into the house's own footprint.
-    private fun lotFromBox(box: FeatureBox, sideSign: Float): CarLot {
+    private fun lotFromBox(box: FeatureBox, sideSign: Float, vehicles: List<RoomItem> = emptyList()): CarLot {
         val outerMargin = 1.2f
         val doorFaceZ = box.cz + box.d / 2f
         val halfW = box.w / 2f + outerMargin
-        return CarLot(box.cx, box.cz, doorFaceZ, doorFaceZ + 7.5f, halfW,
+        val slabHalfW = if (sideSign != 0f) box.w / 2f + outerMargin / 2f else halfW
+        return CarLot(box.cx, box.cz, doorFaceZ, doorFaceZ + neededDrivewayRun(vehicles, slabHalfW * 2f), halfW,
             slabCenterX = box.cx + sideSign * outerMargin / 2f,
-            slabHalfW   = if (sideSign != 0f) box.w / 2f + outerMargin / 2f else halfW)
+            slabHalfW   = slabHalfW)
     }
 
-    // The garage-scene coordinate frame: derived from a lot (not a separate hand-written copy —
-    // that duplication is exactly how the exterior and interior views drifted out of agreement
-    // before), re-centered so the parked slot sits at the ORIGIN with the door facing +Z. A pure
-    // translation of the whole frame leaves dxMin/dxMax unchanged (they're anchor-relative), so
-    // this guarantees a vehicle's dx/dz is legal here iff it's legal in the exterior lot for the
-    // same garage — the same PlacedItems render identically (and stay equally draggable) here
-    // and in the exterior view.
-    private fun recenter(lot: CarLot): CarLot = lot.copy(
-        anchorX = 0f,
-        anchorZ = 0f,
-        doorFaceZ = lot.doorFaceZ - lot.anchorZ,
-        farZ = lot.farZ - lot.anchorZ,
-        slabCenterX = lot.slabCenterX - lot.anchorX,
+    /**
+     * The same lot, moved. Every scene draws the ONE lot [carLot]/[townhouseCarLot] describes,
+     * each in its own frame: the exterior and the floor plan use it as-is (both are centred on
+     * the home), and a room scene — which renders its own room at the origin — shifts it by minus
+     * that room's centre.
+     *
+     * A pure translation leaves `dxMin`/`dxMax` unchanged, since they're anchor-relative. That is
+     * what guarantees a vehicle's dx/dz is legal in one scene iff it's legal in all of them: the
+     * same PlacedItems render in the same real-world spot, and stay equally draggable, wherever
+     * you're standing. (Deriving a second frame with its own anchor instead — as the old
+     * room-garage lot did — is exactly how the interior and exterior views drifted apart.)
+     */
+    fun translate(lot: CarLot, dx: Float, dz: Float): CarLot = lot.copy(
+        anchorX = lot.anchorX + dx,
+        anchorZ = lot.anchorZ + dz,
+        doorFaceZ = lot.doorFaceZ + dz,
+        farZ = lot.farZ + dz,
+        slabCenterX = lot.slabCenterX + dx,
     )
 
-    fun carLot(w: Float, d: Float, garageSide: FeatureSide?, dx: Float = 0f, dz: Float = 0f): CarLot {
+    /**
+     * The lot as a room-shaped zone — the "driveway", a place you walk into and manage vehicles
+     * from, rendered by RoomScene like any other zone (see RoomPlace.DRIVEWAY).
+     *
+     * Deliberately typed [RoomType.GARAGE] rather than introducing a room type of its own: no
+     * saved layout changes, and every existing "is this the garage?" branch — the vehicle tray,
+     * the maintenance strip's vehicle case, the pane's icon and label — keeps working untouched.
+     * It spans the pad plus the garage box behind the door, so standing in it frames both.
+     */
+    /**
+     * The garage's INTERIOR as a room-shaped zone — the box the shell is drawn around, centred on
+     * the lot anchor. [drivewayZone] above is the pad outside it; this is the space behind the
+     * door, and the place non-vehicle belongings sit.
+     *
+     * It is the same rectangle whether the home's garage is an attached wing or a real interior
+     * room, because [lotFromBox] anchors both on their box's own centre — so one zone describes
+     * both, and one set of contents renders identically from the driveway and (for a room) from
+     * inside it.
+     *
+     * Anchored rather than zone-derived on purpose: the DRIVEWAY's extent grows with the fleet, so
+     * offsets stored against it would shift every time a car was added. The garage box moves only
+     * when the garage itself does — and then its contents should move with it, exactly as the
+     * anchor-relative vehicles already do.
+     */
+    fun garageZone(lot: CarLot, gW: Float, gD: Float): RoomZone = RoomZone(
+        type = RoomType.GARAGE,
+        xMin = lot.anchorX - gW / 2f, xMax = lot.anchorX + gW / 2f,
+        zMin = lot.anchorZ - gD / 2f, zMax = lot.anchorZ + gD / 2f,
+    )
+
+    fun drivewayZone(lot: CarLot): RoomZone = RoomZone(
+        type = RoomType.GARAGE,
+        xMin = lot.slabCenterX - lot.slabHalfW,
+        xMax = lot.slabCenterX + lot.slabHalfW,
+        // Back edge: behind the door face by the anchor slot's own depth, so the parked vehicle
+        // inside the garage is inside the zone rather than clipped off its back edge.
+        zMin = minOf(lot.doorFaceZ, lot.anchorZ - CAR_LEN / 2f) - 0.6f,
+        zMax = lot.farZ,
+    )
+
+    fun carLot(
+        w: Float, d: Float, garageSide: FeatureSide?, dx: Float = 0f, dz: Float = 0f,
+        vehicles: List<RoomItem> = emptyList(),
+    ): CarLot {
         if (garageSide == FeatureSide.LEFT || garageSide == FeatureSide.RIGHT || garageSide == FeatureSide.FRONT) {
             val box = HouseSceneGeometry.garageBox(w, d, garageSide, dx, dz)
             // Side garages: keep the outer (away-from-house) margin the same as the front/no-
@@ -195,38 +267,56 @@ object CarLotGeometry {
             // (house-facing) edge — a symmetric margin there would let the pad, and any car
             // dragged onto it, overhang back into the house's own footprint.
             val sideSign = when (garageSide) { FeatureSide.LEFT -> -1f; FeatureSide.RIGHT -> 1f; else -> 0f }
-            return lotFromBox(box, sideSign)
+            return lotFromBox(box, sideSign, vehicles)
         }
         // No garage: park on a front apron beside the entry.
         val gW = (w * 0.55f).coerceIn(2.5f, 4.0f)
-        return CarLot(w / 4f, d / 2f + CAR_LEN / 2f + 1.0f, d / 2f + 0.3f, d / 2f + 7.5f, gW / 2f + 1.2f)
+        val halfW = gW / 2f + 1.2f
+        val doorFaceZ = d / 2f + 0.3f
+        return CarLot(w / 4f, d / 2f + CAR_LEN / 2f + 1.0f, doorFaceZ, doorFaceZ + neededDrivewayRun(vehicles, halfW * 2f), halfW)
     }
-
-    fun garageSceneLot(w: Float, d: Float, garageSide: FeatureSide?): CarLot =
-        recenter(carLot(w, d, garageSide))
 
     // TOWNHOUSE's exterior driveway — approaches the real interior garage room's door, cut
     // directly into the house's actual front wall (HouseSceneGeometry.townhouseGarageBox),
     // rather than a free-standing shell positioned by a generic side-dependent formula. Null
     // when the home has no garage room yet (shouldn't happen post-migration, but a save mid-
     // migration or missing the room defensively renders no driveway rather than crashing).
-    fun townhouseCarLot(floorLayout: FloorLayout): CarLot? =
-        HouseSceneGeometry.townhouseGarageBox(floorLayout)?.let { lotFromBox(it, sideSign = 0f) }
+    fun townhouseCarLot(floorLayout: FloorLayout, vehicles: List<RoomItem> = emptyList()): CarLot? =
+        HouseSceneGeometry.townhouseGarageBox(floorLayout)?.let { lotFromBox(it, sideSign = 0f, vehicles) }
 
-    fun townhouseGarageSceneLot(floorLayout: FloorLayout): CarLot? =
-        townhouseCarLot(floorLayout)?.let { recenter(it) }
+    /**
+     * The home's one vehicle lot, whichever form its garage takes: the real interior garage room
+     * if it has one, otherwise the attached garage feature, otherwise a front apron. Every scene
+     * resolves it through here so there is exactly one answer to "where do this home's vehicles
+     * live", in world coordinates centred on the home.
+     */
+    fun homeLot(
+        floorLayout: FloorLayout,
+        garageSide: FeatureSide?,
+        dx: Float = 0f,
+        dz: Float = 0f,
+        vehicles: List<RoomItem> = emptyList(),
+    ): CarLot =
+        townhouseCarLot(floorLayout, vehicles)
+            ?: carLot(floorLayout.totalW, floorLayout.totalD, garageSide, dx, dz, vehicles)
 
-    // Interior "garage room" lot (TOWNHOUSE) — vehicles are confined entirely within the
-    // room's own floor instead of a driveway running out to a street, so unlike every other
-    // CarLot there's no far edge to tear a vehicle off onto (callers pass allowTearOff = false
-    // to VehiclesOnLot). The pad covers nearly the whole room; the anchor (default single-car
-    // slot) sits toward the front so a car has room to roam back toward the far wall.
-    fun roomGarageLot(w: Float, d: Float): CarLot {
-        val margin    = 0.4f
-        val padStartZ = -d / 2f + margin
-        val farZ      = d / 2f - margin
-        val anchorZ   = padStartZ + CAR_LEN / 2f
-        val halfW     = (w / 2f - margin).coerceAtLeast(CAR_WID / 2f + margin)
-        return CarLot(anchorX = 0f, anchorZ = anchorZ, doorFaceZ = padStartZ, farZ = farZ, halfW = halfW)
+    /**
+     * [homeLot] straight from the home's feature state — including the garage's own drag offset,
+     * which is stored as a single "along the wall" value whose axis depends on which wall it's
+     * on. Every scene that needs the lot goes through here, so a garage dragged to a new spot
+     * takes its driveway (and the fleet parked on it) with it everywhere at once; deriving the
+     * offset by hand at each call site is how the floor plan and the drop handler came to
+     * disagree with the exterior about where a dragged garage's cars were.
+     */
+    fun homeLot(
+        floorLayout: FloorLayout,
+        featurePlacements: Map<HomeFeature, FeatureSide>,
+        featureOffsets: Map<HomeFeature, Pair<Float, Float>> = emptyMap(),
+        vehicles: List<RoomItem> = emptyList(),
+    ): CarLot {
+        val side  = featurePlacements[HomeFeature.GARAGE]
+        val along = featureOffsets[HomeFeature.GARAGE]?.first ?: 0f
+        val (dx, dz) = if (side == FeatureSide.FRONT) along to 0f else 0f to along
+        return homeLot(floorLayout, side, dx, dz, vehicles)
     }
 }

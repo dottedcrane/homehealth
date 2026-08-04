@@ -1,19 +1,23 @@
 package com.homehealth.db
 
+import com.homehealth.data.TaskFrequency
+import com.homehealth.model.CustomAppliance
+import com.homehealth.model.CustomTask
 import com.homehealth.model.FeatureSide
 import com.homehealth.model.FloorLayout
 import com.homehealth.model.HomeFeature
-import com.homehealth.model.HomeSystem
 import com.homehealth.model.PlacedDeck
 import com.homehealth.model.PlacedItem
+import com.homehealth.model.PlacedYardDecor
 import com.homehealth.model.RoomItem
 import com.homehealth.model.RoomPlacement
 import com.homehealth.model.RoomType
 import com.homehealth.model.WallKey
 import com.homehealth.model.WallMode
-import com.homehealth.util.randomUUIDString
+import com.homehealth.model.YardDecorKind
 import org.json.JSONArray
 import org.json.JSONObject
+import java.util.UUID
 
 object HomeStateSerialization {
 
@@ -91,18 +95,139 @@ object HomeStateSerialization {
         } catch (e: Exception) { emptyList() }
     }
 
-    fun serializeHomeSystems(set: Set<HomeSystem>): String {
+    // Single-slot HVAC placement — side + along-wall offset, same shape as
+    // serializeFeatureOffsets' per-entry object, but standalone since HVAC isn't a HomeFeature.
+    fun serializeHvacPlacement(placement: Pair<FeatureSide, Float>?): String {
+        if (placement == null) return ""
+        val (side, along) = placement
+        return JSONObject().apply { put("side", side.name); put("along", along) }.toString()
+    }
+
+    fun deserializeHvacPlacement(json: String): Pair<FeatureSide, Float>? {
+        if (json.isBlank()) return null
+        return try {
+            val o = JSONObject(json)
+            FeatureSide.valueOf(o.getString("side")) to o.getDouble("along").toFloat()
+        } catch (e: Exception) { null }
+    }
+
+    // Single-slot solar array placement — onLeftSlope + along-ridge offset, same shape as
+    // serializeHvacPlacement.
+    fun serializeSolarArrayPlacement(placement: Pair<Boolean, Float>?): String {
+        if (placement == null) return ""
+        val (onLeftSlope, along) = placement
+        return JSONObject().apply { put("onLeftSlope", onLeftSlope); put("along", along) }.toString()
+    }
+
+    fun deserializeSolarArrayPlacement(json: String): Pair<Boolean, Float>? {
+        if (json.isBlank()) return null
+        return try {
+            val o = JSONObject(json)
+            o.getBoolean("onLeftSlope") to o.getDouble("along").toFloat()
+        } catch (e: Exception) { null }
+    }
+
+    // Single-slot EV Battery placement — same shape as serializeHvacPlacement.
+    fun serializeEvBatteryPlacement(placement: Pair<FeatureSide, Float>?): String {
+        if (placement == null) return ""
+        val (side, along) = placement
+        return JSONObject().apply { put("side", side.name); put("along", along) }.toString()
+    }
+
+    fun deserializeEvBatteryPlacement(json: String): Pair<FeatureSide, Float>? {
+        if (json.isBlank()) return null
+        return try {
+            val o = JSONObject(json)
+            FeatureSide.valueOf(o.getString("side")) to o.getDouble("along").toFloat()
+        } catch (e: Exception) { null }
+    }
+
+    fun serializePlacedYardDecor(items: List<PlacedYardDecor>): String {
         val arr = JSONArray()
-        set.forEach { arr.put(it.name) }
+        items.forEach { d ->
+            arr.put(JSONObject().apply {
+                put("id", d.id)
+                put("kind", d.kind.name)
+                put("dx", d.dx); put("dz", d.dz)
+            })
+        }
         return arr.toString()
     }
 
-    fun deserializeHomeSystems(json: String): Set<HomeSystem> {
-        if (json.isBlank()) return emptySet()
+    fun deserializePlacedYardDecor(json: String): List<PlacedYardDecor> {
+        if (json.isBlank()) return emptyList()
         return try {
             val arr = JSONArray(json)
-            (0 until arr.length()).mapNotNull { runCatching { HomeSystem.valueOf(arr.getString(it)) }.getOrNull() }.toSet()
-        } catch (e: Exception) { emptySet() }
+            (0 until arr.length()).mapNotNull { i ->
+                runCatching {
+                    val o = arr.getJSONObject(i)
+                    PlacedYardDecor(
+                        id   = o.getString("id"),
+                        kind = YardDecorKind.valueOf(o.getString("kind")),
+                        dx   = o.getDouble("dx").toFloat(),
+                        dz   = o.getDouble("dz").toFloat(),
+                    )
+                }.getOrNull()
+            }
+        } catch (e: Exception) { emptyList() }
+    }
+
+    fun serializeCustomAppliances(items: List<CustomAppliance>): String {
+        val arr = JSONArray()
+        items.forEach { ca ->
+            arr.put(JSONObject().apply {
+                put("id", ca.id)
+                put("name", ca.name)
+            })
+        }
+        return arr.toString()
+    }
+
+    fun deserializeCustomAppliances(json: String): List<CustomAppliance> {
+        if (json.isBlank()) return emptyList()
+        return try {
+            val arr = JSONArray(json)
+            (0 until arr.length()).mapNotNull { i ->
+                runCatching {
+                    val o = arr.getJSONObject(i)
+                    CustomAppliance(id = o.getString("id"), name = o.getString("name"))
+                }.getOrNull()
+            }
+        } catch (e: Exception) { emptyList() }
+    }
+
+    fun serializeCustomTasks(items: List<CustomTask>): String {
+        val arr = JSONArray()
+        items.forEach { t ->
+            arr.put(JSONObject().apply {
+                put("id", t.id)
+                // On-disk key name kept as "applianceId" — targetKey broadened its meaning (any
+                // MaintenanceTarget.key, not just a CustomAppliance.id) but not its JSON shape,
+                // so no schema/version bump is needed for the rename.
+                put("applianceId", t.targetKey)
+                put("title", t.title)
+                put("frequency", t.frequency.name)
+            })
+        }
+        return arr.toString()
+    }
+
+    fun deserializeCustomTasks(json: String): List<CustomTask> {
+        if (json.isBlank()) return emptyList()
+        return try {
+            val arr = JSONArray(json)
+            (0 until arr.length()).mapNotNull { i ->
+                runCatching {
+                    val o = arr.getJSONObject(i)
+                    CustomTask(
+                        id        = o.getString("id"),
+                        targetKey = o.getString("applianceId"),
+                        title     = o.getString("title"),
+                        frequency = TaskFrequency.valueOf(o.getString("frequency")),
+                    )
+                }.getOrNull()
+            }
+        } catch (e: Exception) { emptyList() }
     }
 
     fun serializeFloorLayout(layout: FloorLayout): String {
@@ -151,7 +276,7 @@ object HomeStateSerialization {
                     RoomPlacement(
                         // Layouts saved before ids were serialized fall back to a fresh
                         // UUID (one final id churn); the next save persists it for good.
-                        id      = obj.optString("id").ifEmpty { randomUUIDString() },
+                        id      = obj.optString("id").ifEmpty { UUID.randomUUID().toString() },
                         type    = RoomType.valueOf(obj.getString("type")),
                         col     = obj.getInt("col"),
                         row     = obj.getInt("row"),
@@ -184,35 +309,8 @@ object HomeStateSerialization {
         } catch (e: Exception) { FloorLayout() }
     }
 
-    // Bumped when a redesign moves items' default anchors, invalidating saved offsets
-    // (offsets are deltas FROM the default position, so they only make sense against
-    // the layout they were saved under). v2 = kitchen slot layout (range unit + bays).
-    // v3 = furniture became drag-and-drop placed items (no longer auto-populated
-    // defaults) — saves below v3 get their default furniture converted to PlacedItems
-    // once, on load (see the migration in MainActivity's restore effect).
-    // v4 = every portable appliance — washer/dryer/water heater and the whole kitchen
-    // (counter segments, stove, sink, dishwasher, microwave, oven, hood, fridge) —
-    // likewise became placed items, so they can be moved/rotated/flipped; appliance
-    // records and documents are re-keyed to the new placed ids during the migration.
-    // v5 = the kitchen re-seeded as one flush run along the left (-X) wall — fridge,
-    // counter(s), stove with the oven tucked under its cooktop, sink, dishwasher, all
-    // facing the room; saved kitchen pieces are snapped onto the run's slots on load
-    // (see FloorLayout.relocateKitchenAppliancesToLeftWall).
-    // v6 = gym equipment (treadmill, exercise bike, weights) became placed items like
-    // every other portable — previously the only category still sharing this flat,
-    // per-room-type-blind offsets map, so a second gym's equipment moved in lockstep
-    // with the first's.
-    private const val ITEM_OFFSETS_VERSION = 6
-
-    /** The `_v` marker the given itemOffsets JSON was saved under — drives one-time load
-     *  migrations. Blank/broken JSON reports current (nothing to migrate). */
-    fun itemOffsetsVersion(json: String): Int =
-        if (json.isBlank()) ITEM_OFFSETS_VERSION
-        else try { JSONObject(json).optInt("_v", 1) } catch (e: Exception) { ITEM_OFFSETS_VERSION }
-
     fun serializeItemOffsets(offsets: Map<RoomItem, Pair<Float, Float>>): String {
         val obj = JSONObject()
-        obj.put("_v", ITEM_OFFSETS_VERSION)
         offsets.forEach { (item, off) ->
             obj.put(item.name, JSONObject().apply { put("dx", off.first); put("dz", off.second) })
         }
@@ -223,15 +321,12 @@ object HomeStateSerialization {
         if (json.isBlank()) return emptyMap()
         return try {
             val obj = JSONObject(json)
-            // Offsets saved before the kitchen redesign (v2) are calibrated against the
-            // old appliance anchors — drop the kitchen ones once (defaults apply instead).
-            val preKitchen = obj.optInt("_v", 1) < 2
             obj.keys().asSequence().mapNotNull { k ->
                 runCatching {
                     val o = obj.getJSONObject(k)
                     RoomItem.valueOf(k) to (o.getDouble("dx").toFloat() to o.getDouble("dz").toFloat())
                 }.getOrNull()
-            }.filterNot { (item, _) -> preKitchen && item.room == RoomType.KITCHEN }.toMap()
+            }.toMap()
         } catch (e: Exception) { emptyMap() }
     }
 
@@ -246,7 +341,6 @@ object HomeStateSerialization {
                 if (p.rotDeg != 0) put("rot", p.rotDeg)
                 if (p.flipX) put("fx", true)
                 if (p.flipZ) put("fz", true)
-                if (p.tracked) put("tr", true)
                 if (p.colorIndex != 0) put("ci", p.colorIndex)
                 if (p.electric) put("ev", true)
             })
@@ -270,7 +364,6 @@ object HomeStateSerialization {
                         rotDeg      = o.optInt("rot", 0),
                         flipX       = o.optBoolean("fx", false),
                         flipZ       = o.optBoolean("fz", false),
-                        tracked     = o.optBoolean("tr", false),
                         colorIndex  = o.optInt("ci", 0),
                         electric    = o.optBoolean("ev", false),
                     )

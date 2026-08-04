@@ -1,28 +1,35 @@
 package com.homehealth.db
 
-import android.content.Context
 import androidx.room.Room
-import androidx.room.RoomDatabase
 
-actual fun getDatabaseBuilder(): RoomDatabase.Builder<HomeDatabase> {
-    throw UnsupportedOperationException("Call HomeDatabase.getInstance(context) on Android")
+internal actual fun getDatabaseInstance(context: PlatformContext): HomeDatabase {
+    return HomeDatabaseAndroid.getInstance(context)
 }
 
-private var instance: HomeDatabase? = null
+internal actual fun closeDatabaseInstance() {
+    HomeDatabaseAndroid.closeInstance()
+}
 
-fun HomeDatabase.Companion.getInstance(context: Context): HomeDatabase =
-    instance ?: synchronized(this) {
-        instance ?: Room.databaseBuilder(
-            context.applicationContext,
-            HomeDatabase::class.java,
-            "home_health.db"
-        )
-            .addMigrations(*MIGRATIONS)
-            .build()
-            .also { instance = it }
+private object HomeDatabaseAndroid {
+    private var instance: HomeDatabase? = null
+
+    fun getInstance(context: PlatformContext): HomeDatabase {
+        return synchronized(this) {
+            instance ?: run {
+                val dbFile = context.getDatabasePath("home_health.db")
+                val builder = Room.databaseBuilder<HomeDatabase>(
+                    context = context,
+                    name = dbFile.absolutePath
+                )
+                getCommonDatabaseBuilder(builder).build().also { instance = it }
+            }
+        }
     }
 
-fun HomeDatabase.Companion.closeInstance() = synchronized(this) {
-    instance?.close()
-    instance = null
+    fun closeInstance() {
+        synchronized(this) {
+            instance?.close()
+            instance = null
+        }
+    }
 }

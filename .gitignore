@@ -11,7 +11,15 @@ gradle-wrapper.jar
 captures/
 .vscode/
 .junie/
-.claude/
+# Claude Code: skills are shared project knowledge and belong in the repo; everything else
+# under .claude/ (settings.local.json and friends) is per-machine. Listing the contents rather
+# than the directory itself is deliberate — git can't re-include a path whose parent directory
+# is excluded, so a bare `.claude/` would make the `!` below a no-op.
+.claude/*
+!.claude/skills/
+
+# Agent-generated planning artifacts — session-scoped, not shared project knowledge.
+.artifacts/
 
 # ── Local machine config ───────────────────────────────────────────────────────
 local.properties

@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CenterFocusStrong
 import androidx.compose.material.icons.outlined.Map
@@ -109,10 +108,18 @@ private class GatedCameraManipulator(
 }
 
 /**
- * Builds a camera manipulator from per-scene [settings]. The Filament Manipulator is rebuilt
- * whenever [settings]'s mode/speed/resetTick change (those are baked in at Builder time), plus
- * any [rebuildKeys] the caller already rebuilds on (e.g. floor, active zone). Gesture on/off
- * toggles apply live via [GatedCameraManipulator] and never trigger a rebuild.
+ * Builds a camera manipulator from per-scene [settings]. Every input the Filament Manipulator
+ * bakes in at Builder time — mode, speeds, resetTick, AND the framing ([orbitHomePosition],
+ * [targetPosition], [mapExtent]) — is part of the rebuild key, so a caller can just compute its
+ * framing and pass it: the camera re-frames whenever those numbers actually change and holds the
+ * user's orbit/zoom whenever they don't. Gesture on/off toggles apply live via
+ * [GatedCameraManipulator] and never trigger a rebuild.
+ *
+ * The framing used to be excluded from the key, which silently stranded any caller whose framing
+ * changed without one of its own [rebuildKeys] changing — the floor-plan camera keyed on
+ * gridCols/gridRows while its framing depends on totalW/totalD, so converting a room to a hallway
+ * (1 m column instead of 2 m) left it framed for the old footprint. [rebuildKeys] survives for
+ * callers that need to force a rebuild on something the framing numbers don't capture.
  */
 @Composable
 fun rememberConfigurableCameraManipulator(
@@ -123,7 +130,8 @@ fun rememberConfigurableCameraManipulator(
     vararg rebuildKeys: Any?,
 ): CameraGestureDetector.CameraManipulator {
     val settingsState = rememberUpdatedState(settings)
-    return key(settings.mode, settings.orbitSpeed, settings.zoomSpeed, settings.resetTick, *rebuildKeys) {
+    return key(settings.mode, settings.orbitSpeed, settings.zoomSpeed, settings.resetTick,
+               orbitHomePosition, targetPosition, mapExtent, *rebuildKeys) {
         // Builds the manipulator directly via `remember` rather than the library's
         // `rememberCameraManipulator` wrapper — that wrapper is just `remember(creator)` with
         // no other independent behavior, and since we always supply our own `creator` (never
@@ -162,9 +170,14 @@ fun CameraGearButton(
     settings: CameraSettings,
     onSettingsChange: (CameraSettings) -> Unit,
     modifier: Modifier = Modifier,
-    // Room view only — when provided, the dialog gains an "Angle" preset row (Eye/Corner/Top).
-    camAngle: RoomCamAngle? = null,
-    onCamAngleChange: ((RoomCamAngle) -> Unit)? = null,
+    // When [camAngles] is non-empty and both the current angle and its setter are supplied, the
+    // dialog gains an "Angle" preset section listing exactly those angles, in that order. One
+    // generalized triple rather than the old room/exterior/garage parallel params: every scene
+    // offers angles now, and the set differs only in which SceneCamAngle entries it lists
+    // (see ViewState.camAngles).
+    camAngle: SceneCamAngle? = null,
+    camAngles: List<SceneCamAngle> = emptyList(),
+    onCamAngleChange: ((SceneCamAngle) -> Unit)? = null,
 ) {
     var showDialog by remember { mutableStateOf(false) }
     IconButton(onClick = { showDialog = true }, modifier = modifier) {
@@ -176,6 +189,7 @@ fun CameraGearButton(
             onSettingsChange = onSettingsChange,
             onDismiss = { showDialog = false },
             camAngle = camAngle,
+            camAngles = camAngles,
             onCamAngleChange = onCamAngleChange,
         )
     }
@@ -186,8 +200,9 @@ private fun CameraSettingsDialog(
     settings: CameraSettings,
     onSettingsChange: (CameraSettings) -> Unit,
     onDismiss: () -> Unit,
-    camAngle: RoomCamAngle? = null,
-    onCamAngleChange: ((RoomCamAngle) -> Unit)? = null,
+    camAngle: SceneCamAngle? = null,
+    camAngles: List<SceneCamAngle> = emptyList(),
+    onCamAngleChange: ((SceneCamAngle) -> Unit)? = null,
 ) {
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -199,10 +214,11 @@ private fun CameraSettingsDialog(
                     settings = settings,
                     onSettingsChange = onSettingsChange,
                     camAngle = camAngle,
+                    camAngles = camAngles,
                     // Picking an angle closes the dialog right away — the whole point of the
                     // preset is the new framing, and the dialog's scrim would hide it.
                     onCamAngleChange = onCamAngleChange?.let { change ->
-                        { angle: RoomCamAngle -> change(angle); onDismiss() }
+                        { angle: SceneCamAngle -> change(angle); onDismiss() }
                     },
                 )
             }
@@ -215,16 +231,20 @@ private fun CameraSettingsDialog(
 internal fun CameraSettingsPanel(
     settings: CameraSettings,
     onSettingsChange: (CameraSettings) -> Unit,
-    camAngle: RoomCamAngle? = null,
-    onCamAngleChange: ((RoomCamAngle) -> Unit)? = null,
+    camAngle: SceneCamAngle? = null,
+    camAngles: List<SceneCamAngle> = emptyList(),
+    onCamAngleChange: ((SceneCamAngle) -> Unit)? = null,
 ) {
-    // Not scrollable itself — each host (room dialog, floor-plan settings card) provides its
-    // own scroll container sized to its space, so scrolling never nests.
+    // Not scrollable itself — the hosting dialog provides its own scroll container sized to its
+    // space, so scrolling never nests.
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        if (camAngle != null && onCamAngleChange != null) {
+        if (camAngle != null && onCamAngleChange != null && camAngles.isNotEmpty()) {
             Text("Angle", style = MaterialTheme.typography.labelLarge)
             Column {
-                RoomCamAngle.entries.forEach { angle ->
+                // Iterates the caller's list rather than SceneCamAngle.entries so each scene
+                // shows only the angles it actually implements (EYE has no meaning looking down
+                // at a neighbourhood) in the order it wants them.
+                camAngles.forEach { angle ->
                     CameraRadioRow(
                         icon = angle.icon,
                         label = angle.label,
@@ -276,11 +296,11 @@ internal fun CameraSettingsPanel(
     }
 }
 
-// Icons for the room-view camera angle presets.
-private val RoomCamAngle.icon: ImageVector get() = when (this) {
-    RoomCamAngle.DOORWAY  -> Icons.Outlined.Visibility   // eye level, standing in the door
-    RoomCamAngle.CORNER   -> Icons.Outlined.Videocam     // elevated corner overview
-    RoomCamAngle.OVERHEAD -> Icons.Outlined.Map          // straight down, floor-plan style
+// Icons for the camera angle presets, shared by every scene that offers them.
+private val SceneCamAngle.icon: ImageVector get() = when (this) {
+    SceneCamAngle.EYE  -> Icons.Outlined.Visibility   // standing inside at eye height
+    SceneCamAngle.SIDE -> Icons.Outlined.Videocam     // oblique 3D overview
+    SceneCamAngle.TOP  -> Icons.Outlined.Map          // straight down, floor-plan style
 }
 
 private val CameraMode.icon: ImageVector get() = when (this) {

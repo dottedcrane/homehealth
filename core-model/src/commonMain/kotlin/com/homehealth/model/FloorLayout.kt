@@ -1,13 +1,13 @@
 package com.homehealth.model
 
 import com.homehealth.scene.WALL_T
-import com.homehealth.util.randomUUIDString
+import java.util.UUID
 import kotlin.math.roundToInt
 
 private const val HALLWAY_SIZE = 1.0f
 
 data class RoomPlacement(
-    val id: String = randomUUIDString(),
+    val id: String = UUID.randomUUID().toString(),
     val type: RoomType,
     val col: Int,
     val row: Int,
@@ -296,7 +296,8 @@ data class FloorLayout(
      */
     fun withGarageRoom(): FloorLayout {
         if (rooms.any { it.type == RoomType.GARAGE }) return this
-        val span = 3 // 3x3 cells on the standard 2.0m grid = 6m x 6m, comfortably above minWidthM/minDepthM
+        val span = 3 // 3x3 cells on the standard 2.0m grid = 6m x 6m — a comfortable default;
+                     // the user can shrink it in the editor since GARAGE has no fixed minimum
         val startCol = gridCols
         var layout = this
         repeat(span) { layout = layout.expandCols() }
@@ -306,6 +307,17 @@ data class FloorLayout(
         ))
     }
 }
+
+/**
+ * Whether [p] sits where a TOWNHOUSE's interior garage bay must sit for the exterior garage
+ * door/driveway geometry to line up (see HouseSceneGeometry.townhouseGarageBox's doc comment:
+ * front edge = the house's front wall, right edge = the house's right wall) — [FloorLayout.
+ * withGarageRoom] always seeds it here. Used to keep GARAGE out of the room-type picker for
+ * any other room, so a change-type/swap can't silently produce a garage whose exterior door
+ * renders in the wrong place.
+ */
+fun FloorLayout.isValidGaragePosition(p: RoomPlacement): Boolean =
+    p.floor == 0 && p.row == 0 && p.col + p.colSpan == gridCols
 
 // The open-plan core of the home: these spaces flow into each other with no wall at all —
 // structure is carried by pillars at the open junctions (rendered by the scenes), not walls.
@@ -333,13 +345,28 @@ private fun isOpenPair(a: RoomType, b: RoomType) =
 // Lower = better door target when a room picks where its ONE entry door goes: circulation
 // first, then public living space. Bathrooms and the stairwell rank last so no room routes
 // THROUGH them — they're only chosen when they're the sole neighbor (ensuite, attic stair).
-private fun doorTargetRank(t: RoomType): Int = when (t) {
-    RoomType.HALLWAY                                            -> 0
-    RoomType.FOYER                                              -> 1
-    RoomType.LIVING_ROOM                                        -> 2
-    RoomType.DINING_ROOM, RoomType.KITCHEN                      -> 3
-    RoomType.BATHROOM, RoomType.POWDER_ROOM, RoomType.STAIRCASE -> 9
-    else                                                        -> 5
+//
+// Pair-aware because two room types are SERVANTS of a specific neighbor rather than rooms the
+// home circulates into: a pantry is part of its kitchen, and a closet/walk-in is part of its
+// bedroom. Both outrank circulation, which is the one case where routing to the hallway is
+// wrong — a pantry with a hall door isn't a pantry, it's a store room. Every other pair falls
+// through to the generic table below, so nothing else changes.
+//
+// The ENSUITE BATH is deliberately NOT generalised here: a bathroom touching both a hallway and
+// a bedroom is usually the hall bath, so making it prefer bedrooms would mis-route far more
+// often than it helps. Suites pin theirs with an explicit wallOverride instead — see the
+// preset layouts in NeighborPresets.kt.
+private fun doorTargetRank(from: RoomType, to: RoomType): Int = when {
+    from == RoomType.PANTRY  && to == RoomType.KITCHEN -> -1
+    from == RoomType.STORAGE && to == RoomType.BEDROOM -> -1
+    else -> when (to) {
+        RoomType.HALLWAY                                            -> 0
+        RoomType.FOYER                                              -> 1
+        RoomType.LIVING_ROOM                                        -> 2
+        RoomType.DINING_ROOM, RoomType.KITCHEN                      -> 3
+        RoomType.BATHROOM, RoomType.POWDER_ROOM, RoomType.STAIRCASE -> 9
+        else                                                        -> 5
+    }
 }
 
 // Room pairs whose shared wall should always default to solid (no opening).
@@ -419,7 +446,7 @@ fun FloorLayout.effectiveWallModes(floor: Int): Map<WallKey, WallMode> {
     for (p in byId.values.sortedBy { it.id }) {
         if (p.type in circulation || p.id in openAdjacent) continue
         val candidates = neighborsOf[p.id].orEmpty().mapNotNull { byId[it] }
-        val order = compareBy<RoomPlacement>({ doorTargetRank(it.type) }, { it.id })
+        val order = compareBy<RoomPlacement>({ doorTargetRank(p.type, it.type) }, { it.id })
         // Prefer neighbors a door is normally allowed into; if the room is otherwise
         // sealed (e.g. a bathroom boxed in by public rooms), allow one anyway.
         val target = candidates.filterNot { isSolidPair(p.type, it.type) }.minWithOrNull(order)
@@ -527,8 +554,20 @@ fun FloorLayout.wallModesForZone(zone: RoomZone, floor: Int): Map<FeatureSide, W
 // rendering loop (room view, floor plan, house interiors) skips cars automatically.
 const val CAR_PLACEMENT_ID = "vehicles"
 
+// Sentinel [PlacedItem.placementId] for things stashed in the attic — same reasoning as cars:
+// the attic is a real place you walk into, but it is never a [RoomPlacement] (it doesn't appear
+// on the floor plan at all), so items up there have no room id to hang off. Only keepsakes get
+// there today, dragged in from the attic pane's tray.
+const val ATTIC_PLACEMENT_ID = "attic"
+
+// Sentinel [PlacedItem.placementId] for things kept in an ATTACHED garage — the wing an Estate or
+// Ranch carries, which is geometry outside the footprint rather than a room. Homes whose garage IS
+// a room (Townhouse, Classic) never use this: their garage contents hang off that room's own id, so
+// the one physical space always has exactly one bucket. See RoomSurroundings.garagePlacementId.
+const val GARAGE_PLACEMENT_ID = "garage"
+
 data class PlacedItem(
-    val id: String = randomUUIDString(),
+    val id: String = UUID.randomUUID().toString(),
     val placementId: String,
     val item: RoomItem,
     val dx: Float = 0f,
@@ -538,16 +577,30 @@ data class PlacedItem(
     val rotDeg: Int = 0,
     val flipX: Boolean = false,
     val flipZ: Boolean = false,
-    // Lifespan tracking opt-in (furniture/treasures only) — appliances and vehicles are
-    // always tracked; furniture enters the maintenance hub only when the user flips this
-    // via the track button on its rotate/flip bar. Never generates tasks or reminders.
-    val tracked: Boolean = false,
     // Vehicles only — body-paint choice (index into VEHICLE_BODY_COLORS) and fuel type, set
     // from the vehicle actions bar. Fuel type also gates the oil-change task for that vehicle
     // type in HomeTaskList once every vehicle of that type is electric.
     val colorIndex: Int = 0,
     val electric: Boolean = false,
 )
+
+/**
+ * Whether a room [depthM] metres deep has room for at least the mandatory kitchen run —
+ * fridge, stove, sink, dishwasher, no counters — that [kitchenRunSlots] lays out. Uses the
+ * exact same usable-depth formula [kitchenRunSlots] computes internally, kept in one place so
+ * the two can never drift apart. [RoomType.minCellArea]'s generic area tier isn't a strong
+ * enough gate on its own — a room can clear it (e.g. a 2x2) while still being far too small for
+ * a real appliance run, which [kitchenRunSlots] would otherwise cram in regardless (it only
+ * ever drops counters, down to zero, never the mandatory appliances themselves). Takes a plain
+ * depth rather than a [RoomZone] so it can gate a candidate room that doesn't exist yet (the
+ * room-type picker, working from selected-tile colSpan/rowSpan) as well as a real one.
+ */
+fun canFitKitchenRun(depthM: Float): Boolean {
+    val usable = depthM - WALL_T - 0.1f
+    val mandatory = RoomItem.REFRIGERATOR.runWidth + RoomItem.STOVE.runWidth +
+        RoomItem.KITCHEN_SINK.runWidth + RoomItem.DISHWASHER.runWidth
+    return usable >= mandatory
+}
 
 /**
  * The seeded kitchen arrangement: one flush run along the room's left (-X) wall — fridge,
@@ -645,11 +698,101 @@ private fun FloorLayout.bathroomFixtureSlots(zone: RoomZone, floor: Int): List<F
 }
 
 /**
- * The furnished starting state: one of each furniture piece and portable appliance (the
- * whole kitchen included, seeded as the left-wall run built by [kitchenRunSlots]) per room
- * of its nominal type, as drag-and-droppable [PlacedItem]s anchored to the room's
- * representative placement id. Used to seed a newly claimed home, and — via [includeItem] —
- * to migrate saves one item category at a time (v3 converted furniture defaults, v4 the
+ * The seeded theater arrangement — a screen against the back (-Z) wall and two rows of seating
+ * facing it, computed like [bathroomFixtureSlots] rather than left to the generic pass: no
+ * [RoomItem] names [RoomType.HOME_THEATER] as its nominal room (the whole point of [trayRooms]
+ * is that a theater borrows sofa/chair/TV-stand pieces whose actual home is elsewhere), so
+ * without an explicit slot table a new theater seeds as a bare floor. No door query is needed
+ * the way a bathroom's fixtures need one — a theater's screen wall is simply "the back wall",
+ * with nothing to dodge.
+ *
+ * TV_STAND's stand/screen cubes sit at zero local z-offset (see HouseScene's ItemNode), so it
+ * reads the same from either face — no rotation needed to make it "face" the seating. SOFA's
+ * back cushion, by contrast, sits behind the seat at its default rotDeg=0 (see RoomItem.SOFA's
+ * geometry); rotDeg=180 negates both local offsets, swinging the back cushion to the +Z side so
+ * the seat faces -Z, toward the screen — the same convention every row below reuses.
+ */
+private fun theaterSlots(zone: RoomZone): List<FixtureSlot> {
+    val w = zone.w
+    val d = zone.d
+    val backFace = -d / 2f + WALL_T / 2f
+    val slots = mutableListOf<FixtureSlot>()
+    fun add(ri: RoomItem, x: Float, z: Float, rot: Int) =
+        slots.add(FixtureSlot(ri, x - ri.xFrac * w * 0.38f, z - ri.zFrac * d * 0.38f, rot))
+
+    add(RoomItem.TV_STAND, 0f, backFace + 0.30f, 0)
+
+    // Front and back rows, both facing the screen (-Z) — spacing scaled off the room's own
+    // depth so a small theater doesn't crowd its rows into each other or the screen.
+    val frontZ = backFace + d * 0.42f
+    val backZ  = backFace + d * 0.68f
+    add(RoomItem.SOFA,         0f,         frontZ, 180)
+    add(RoomItem.OFFICE_CHAIR, -w * 0.28f, backZ,  180)
+    add(RoomItem.OFFICE_CHAIR,  w * 0.28f, backZ,  180)
+    add(RoomItem.COFFEE_TABLE, w * 0.38f,  frontZ, 0)
+    return slots
+}
+
+/**
+ * The furnished starting state for one room — one of each furniture piece and portable
+ * appliance (the whole kitchen included, seeded as the left-wall run built by
+ * [kitchenRunSlots]) matching [zone]'s type, as drag-and-droppable [PlacedItem]s anchored to
+ * the room's representative placement id. Scoped to a single zone so it can reseed one room
+ * after a type change/swap, not just the whole floor; [defaultFurniturePlacedItems] below is a
+ * thin loop over every zone built on top of this. Returns an empty list if [zone] has no
+ * surviving placement to anchor to (shouldn't happen for a zone read from the same layout).
+ * [removedInstances] filtering is deliberately NOT done here — callers filter the returned
+ * items by `"${it.placementId}:${it.item.name}"`, since a fresh reseed (type change/swap) has
+ * no [removedInstances] history to honor for the room's new contents.
+ */
+fun FloorLayout.defaultFurnitureForZone(
+    zone: RoomZone,
+    floor: Int,
+    itemOffsets: Map<RoomItem, Pair<Float, Float>> = emptyMap(),
+    includeItem: (RoomItem) -> Boolean = { it.isFurniture || it.isPortable },
+): List<PlacedItem> {
+    val repId = placementIdsInZone(zone, floor).minOrNull() ?: return emptyList()
+    val runSlots = if (zone.type == RoomType.KITCHEN) kitchenRunSlots(zone) else emptyList()
+    // Bathroom fixtures get computed wall-aware slots like the kitchen run does —
+    // handled apart from the generic loop because powder rooms borrow the toilet
+    // and vanity, whose nominal room never equals the powder zone's type. Theaters are the
+    // same story: no RoomItem names HOME_THEATER as its room (see theaterSlots' kdoc), so
+    // without this the generic pass below matches nothing and a new theater seeds empty.
+    val fixtureSlots = when (zone.type) {
+        RoomType.BATHROOM, RoomType.POWDER_ROOM -> bathroomFixtureSlots(zone, floor)
+        RoomType.HOME_THEATER                   -> theaterSlots(zone)
+        else                                    -> emptyList()
+    }
+    val generic = RoomItem.entries
+        .filter { includeItem(it) && it.room == zone.type }
+        // Treasures are user-defined keepsakes — never part of a room's default kit.
+        .filterNot { it == RoomItem.TREASURE }
+        .filterNot { ri -> fixtureSlots.any { it.item == ri } }
+        .flatMap { ri ->
+            val (dx, dz) = itemOffsets[ri] ?: (0f to 0f)
+            // Kitchens seed every piece onto its run slot (counters once per
+            // segment); everything else seeds singly at its frac anchor, unrotated.
+            if (zone.type == RoomType.KITCHEN)
+                runSlots.filter { it.first == ri }.map { (_, slot) ->
+                    PlacedItem(placementId = repId, item = ri,
+                        dx = dx + slot.first, dz = dz + slot.second, rotDeg = 90)
+                }
+            else listOf(PlacedItem(placementId = repId, item = ri, dx = dx, dz = dz))
+        }
+    val fixtures = fixtureSlots
+        .filter { includeItem(it.item) }
+        .map { slot ->
+            val (dx, dz) = itemOffsets[slot.item] ?: (0f to 0f)
+            PlacedItem(placementId = repId, item = slot.item,
+                dx = dx + slot.dx, dz = dz + slot.dz, rotDeg = slot.rotDeg)
+        }
+    return generic + fixtures
+}
+
+/**
+ * The furnished starting state for the whole home — [defaultFurnitureForZone] applied to every
+ * room, floor by floor. Used to seed a newly claimed home, and — via [includeItem] — to
+ * migrate saves one item category at a time (v3 converted furniture defaults, v4 the
  * portables): [removedInstances]/[itemOffsets] carry over what the user had hidden or moved
  * under the old default-item scheme.
  */
@@ -659,72 +802,10 @@ fun FloorLayout.defaultFurniturePlacedItems(
     includeItem: (RoomItem) -> Boolean = { it.isFurniture || it.isPortable },
 ): List<PlacedItem> =
     (0..maxFloor()).flatMap { floor ->
-        toMergedZones(floor).flatMap zone@{ zone ->
-            val repId = placementIdsInZone(zone, floor).minOrNull() ?: return@zone emptyList()
-            val runSlots = if (zone.type == RoomType.KITCHEN) kitchenRunSlots(zone) else emptyList()
-            // Bathroom fixtures get computed wall-aware slots like the kitchen run does —
-            // handled apart from the generic loop because powder rooms borrow the toilet
-            // and vanity, whose nominal room never equals the powder zone's type.
-            val fixtureSlots = if (zone.type == RoomType.BATHROOM || zone.type == RoomType.POWDER_ROOM)
-                bathroomFixtureSlots(zone, floor) else emptyList()
-            val generic = RoomItem.entries
-                .filter { includeItem(it) && it.room == zone.type }
-                // Treasures are user-defined keepsakes — never part of a room's default kit.
-                .filterNot { it == RoomItem.TREASURE }
-                .filterNot { ri -> fixtureSlots.any { it.item == ri } }
-                .filterNot { "$repId:${it.name}" in removedInstances }
-                .flatMap { ri ->
-                    val (dx, dz) = itemOffsets[ri] ?: (0f to 0f)
-                    // Kitchens seed every piece onto its run slot (counters once per
-                    // segment); everything else seeds singly at its frac anchor, unrotated.
-                    if (zone.type == RoomType.KITCHEN)
-                        runSlots.filter { it.first == ri }.map { (_, slot) ->
-                            PlacedItem(placementId = repId, item = ri,
-                                dx = dx + slot.first, dz = dz + slot.second, rotDeg = 90)
-                        }
-                    else listOf(PlacedItem(placementId = repId, item = ri, dx = dx, dz = dz))
-                }
-            val fixtures = fixtureSlots
-                .filter { includeItem(it.item) }
-                .filterNot { "$repId:${it.item.name}" in removedInstances }
-                .map { slot ->
-                    val (dx, dz) = itemOffsets[slot.item] ?: (0f to 0f)
-                    PlacedItem(placementId = repId, item = slot.item,
-                        dx = dx + slot.dx, dz = dz + slot.dz, rotDeg = slot.rotDeg)
-                }
-            generic + fixtures
+        toMergedZones(floor).flatMap { zone ->
+            defaultFurnitureForZone(zone, floor, itemOffsets, includeItem)
         }
-    }
-
-/**
- * One-time v5 save migration: the seeded kitchen changed from a back-wall counter trio (oven
- * tower and fridge on the side walls) to the flush left-wall run built by [kitchenRunSlots].
- * Saved kitchens carry their seed-time offsets and rotations, so the first saved copy of each
- * run piece in every kitchen — including the first one/two counter segments — snaps onto its
- * new slot keeping its [PlacedItem.id] (maintenance records and documents stay attached).
- * Everything else is untouched: extra duplicates, counter segments beyond the run's, and
- * copies dragged into other rooms (a garage fridge) — the frac bases everything hangs off
- * never moved, so those items' absolute spots are already preserved.
- */
-fun FloorLayout.relocateKitchenAppliancesToLeftWall(placedItems: List<PlacedItem>): List<PlacedItem> {
-    val zoneById = (0..maxFloor()).flatMap { floor ->
-        toMergedZones(floor).flatMap { zone -> placementIdsInZone(zone, floor).map { it to zone } }
-    }.toMap()
-    // Each kitchen zone's still-unclaimed run slots, consumed in save order so the first
-    // copy of a piece (the original seed, in practice) is the one that snaps.
-    val openSlots = mutableMapOf<RoomZone, MutableMap<RoomItem, MutableList<Pair<Float, Float>>>>()
-    return placedItems.map { pi ->
-        if (pi.item.room != RoomType.KITCHEN) return@map pi
-        val zone = zoneById[pi.placementId] ?: return@map pi
-        if (zone.type != RoomType.KITCHEN) return@map pi
-        val slots = openSlots.getOrPut(zone) {
-            kitchenRunSlots(zone).groupBy({ it.first }, { it.second })
-                .mapValuesTo(mutableMapOf()) { it.value.toMutableList() }
-        }
-        val (dx, dz) = slots[pi.item]?.removeFirstOrNull() ?: return@map pi
-        pi.copy(dx = dx, dz = dz, rotDeg = 90)
-    }
-}
+    }.filterNot { "${it.placementId}:${it.item.name}" in removedInstances }
 
 /**
  * All placement ids that resolve to the same (possibly merged) visual room as [zone] — used to
@@ -736,16 +817,54 @@ fun FloorLayout.placementIdsInZone(zone: RoomZone, floor: Int): Set<String> =
     rooms.filter { it.floor == floor && mergedZoneFor(it, floor) == zone }.map { it.id }.toSet()
 
 /**
+ * How many of each [RoomItem] the room covered by [placementIds] holds — the count the furniture
+ * tray badges each icon with, and the one [RoomZone.canFit] measures its floor-area budget
+ * against. Takes the id set rather than a [RoomZone] so callers can reuse the
+ * [placementIdsInZone] result they already computed.
+ *
+ * Vehicles are excluded: they hang off [CAR_PLACEMENT_ID] rather than any room placement, and
+ * CarLotGeometry's anchor/driveway slot logic already governs how many of them fit.
+ */
+fun roomItemCounts(placedItems: List<PlacedItem>, placementIds: Set<String>): Map<RoomItem, Int> =
+    placedItems.filter { it.placementId in placementIds && !it.item.isVehicle }
+        .groupingBy { it.item }.eachCount()
+
+/**
  * Drops any [items] whose [PlacedItem.placementId] no longer matches a surviving
  * [RoomPlacement] — orphaned by [removeRoom]/[shrinkCols]/[shrinkRows]/[removeTopFloor], all of
  * which can delete a placement without knowing about placedItems (separate state, held by the
- * caller). Call after any mutation that can delete a room. Vehicles ([CAR_PLACEMENT_ID]) are
- * never room-anchored, so they always survive.
+ * caller). Call after any mutation that can delete a room. Vehicles ([CAR_PLACEMENT_ID]), anything
+ * in the attic ([ATTIC_PLACEMENT_ID]) and anything in an attached garage ([GARAGE_PLACEMENT_ID])
+ * are never room-anchored, so they always survive — without that, deleting any room would silently
+ * take every keepsake in the attic and every tool in the garage with it, since no surviving
+ * placement claims them.
  */
-fun FloorLayout.pruneOrphanedPlacedItems(items: List<PlacedItem>): List<PlacedItem> {
+private val NON_ROOM_PLACEMENT_IDS =
+    setOf(CAR_PLACEMENT_ID, ATTIC_PLACEMENT_ID, GARAGE_PLACEMENT_ID)
+
+/**
+ * The same split, but handing back what was about to be lost as well as what survives — because
+ * deleting a room should not be able to delete the user's own belongings.
+ *
+ * Deciding WHICH orphans are worth keeping needs the maintenance DB (does this one carry an install
+ * year or a document?), which core-model has no access to, so the policy lives at the call site and
+ * this only reports the facts. See MainActivity's `rescueOrphans`: keepsakes and anything with
+ * tracked history are re-homed into the attic, and only genuinely anonymous furniture is dropped.
+ */
+data class OrphanSweep(val kept: List<PlacedItem>, val orphaned: List<PlacedItem>)
+
+fun FloorLayout.sweepOrphanedPlacedItems(items: List<PlacedItem>): OrphanSweep {
     val validIds = rooms.map { it.id }.toSet()
-    return items.filter { it.placementId == CAR_PLACEMENT_ID || it.placementId in validIds }
+    val (kept, orphaned) = items.partition {
+        it.placementId in NON_ROOM_PLACEMENT_IDS || it.placementId in validIds
+    }
+    return OrphanSweep(kept, orphaned)
 }
+
+/** True for a placement id that names a space outside the floor plan — the lot, the attic, an
+ *  attached garage. Those belong to the OWNER rather than to the claimed model's room layout, so
+ *  they survive a floor-plan edit (above) and a model claim alike (see claimNeighbor). */
+fun isNonRoomPlacement(placementId: String): Boolean = placementId in NON_ROOM_PLACEMENT_IDS
 
 /**
  * One stable key per (possibly merged) zone of [type], across every floor — used to give each

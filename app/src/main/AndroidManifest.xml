@@ -18,15 +18,6 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="com.android.vending.BILLING" />
 
-    <!--
-        CAMERA permission and AR feature are NOT currently used.
-        Uncomment when implementing the "Scan Room" AR feature.
-
-    <uses-permission android:name="android.permission.CAMERA" />
-    <uses-feature android:name="android.hardware.camera.ar" android:required="false" />
-    <meta-data android:name="com.google.ar.core" android:value="optional" />
-    -->
-
     <application
         android:allowBackup="true"
         android:hardwareAccelerated="true"

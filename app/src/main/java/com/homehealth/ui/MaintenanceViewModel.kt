@@ -15,7 +15,7 @@ import kotlinx.coroutines.launch
 
 class MaintenanceViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val dao = HomeDatabase.getInstance(application).userHomeDao()
+    private val dao = HomeDatabaseFactory.getInstance(application).userHomeDao()
 
     // Set once restore() succeeds: restoreZip() closes the live RoomDatabase to swap in the
     // backup's files, so `dao` now points at a closed connection until the user restarts the
@@ -60,7 +60,12 @@ class MaintenanceViewModel(application: Application) : AndroidViewModel(applicat
         featurePlacements: Map<HomeFeature, FeatureSide>,
         featureOffsets: Map<HomeFeature, Pair<Float, Float>>,
         placedDecks: List<PlacedDeck>,
-        homeSystems: Set<HomeSystem>,
+        hvacPlacement: Pair<FeatureSide, Float>?,
+        solarArrayPlacement: Pair<Boolean, Float>?,
+        evBatteryPlacement: Pair<FeatureSide, Float>?,
+        placedYardDecor: List<PlacedYardDecor>,
+        customAppliances: List<CustomAppliance>,
+        customTasks: List<CustomTask>,
         floorLayout: FloorLayout,
         itemOffsets: Map<RoomItem, Pair<Float, Float>>,
         placedItems: List<PlacedItem>,
@@ -69,6 +74,10 @@ class MaintenanceViewModel(application: Application) : AndroidViewModel(applicat
         purchaseYear: Int?,
         label: String,
         neighborKey: String = "",
+        // Null = the owner has never chosen, which resolves to the roof's default on read (see
+        // AtticType). Persisted as "" so an untouched home is indistinguishable from one saved
+        // before the column existed.
+        atticType: AtticType? = null,
     ) = dbLaunch {
         dao.upsertHome(
             UserHomeEntity(
@@ -76,11 +85,17 @@ class MaintenanceViewModel(application: Application) : AndroidViewModel(applicat
                 featurePlacementsJson = HomeStateSerialization.serializeFeaturePlacements(featurePlacements),
                 featureOffsetsJson    = HomeStateSerialization.serializeFeatureOffsets(featureOffsets),
                 placedDecksJson       = HomeStateSerialization.serializePlacedDecks(placedDecks),
-                homeSystemsJson       = HomeStateSerialization.serializeHomeSystems(homeSystems),
+                hvacPlacementJson     = HomeStateSerialization.serializeHvacPlacement(hvacPlacement),
+                solarArrayPlacementJson = HomeStateSerialization.serializeSolarArrayPlacement(solarArrayPlacement),
+                evBatteryPlacementJson = HomeStateSerialization.serializeEvBatteryPlacement(evBatteryPlacement),
+                placedYardDecorJson   = HomeStateSerialization.serializePlacedYardDecor(placedYardDecor),
+                customAppliancesJson  = HomeStateSerialization.serializeCustomAppliances(customAppliances),
+                customTasksJson       = HomeStateSerialization.serializeCustomTasks(customTasks),
                 floorLayoutJson       = HomeStateSerialization.serializeFloorLayout(floorLayout),
                 itemOffsetsJson       = HomeStateSerialization.serializeItemOffsets(itemOffsets),
                 placedItemsJson       = HomeStateSerialization.serializePlacedItems(placedItems),
                 removedInstancesJson  = HomeStateSerialization.serializeRemovedInstances(removedInstances),
+                atticType             = atticType?.name ?: "",
                 buildYear             = buildYear,
                 purchaseYear          = purchaseYear,
                 label                 = label,
@@ -114,9 +129,23 @@ class MaintenanceViewModel(application: Application) : AndroidViewModel(applicat
 
     fun deleteDocument(id: Int) = dbLaunch { dao.deleteDocument(id) }
 
+    // Each of these touches exactly one column, via seed-then-update rather than a whole-entity
+    // upsert: a task_records row holds three independent pieces of state (completion, snooze,
+    // mute) and rebuilding it to stamp one would reset the others — see UserHomeDao's setters.
     fun markTaskDone(taskKey: String) = dbLaunch {
-        dao.upsertTaskRecord(MaintenanceTaskRecord(taskKey = taskKey,
-            lastCompleted = System.currentTimeMillis()))
+        dao.ensureTaskRecord(taskKey)
+        dao.setTaskLastCompleted(taskKey, System.currentTimeMillis())
+    }
+
+    /** Defers a task without pretending it was done — [untilMillis] of 0 clears the snooze. */
+    fun snoozeTask(taskKey: String, untilMillis: Long) = dbLaunch {
+        dao.ensureTaskRecord(taskKey)
+        dao.setTaskSnoozedUntil(taskKey, untilMillis)
+    }
+
+    fun setTaskMuted(taskKey: String, muted: Boolean) = dbLaunch {
+        dao.ensureTaskRecord(taskKey)
+        dao.setTaskMuted(taskKey, muted)
     }
 
     // ── Backup ────────────────────────────────────────────────────────────────

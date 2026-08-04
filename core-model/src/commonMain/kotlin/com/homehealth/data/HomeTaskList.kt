@@ -1,9 +1,12 @@
 package com.homehealth.data
 
+import com.homehealth.model.AtticType
+import com.homehealth.model.CustomTask
 import com.homehealth.model.HiddenAsset
 import com.homehealth.model.HomeFeature
 import com.homehealth.model.HomeStyle
 import com.homehealth.model.HomeSystem
+import com.homehealth.model.PlacedItem
 import com.homehealth.model.RoomItem
 import com.homehealth.model.RoomType
 
@@ -20,13 +23,64 @@ data class MaintenanceTask(
     // to a fixed set of months instead of one specific task-chosen month (see
     // MaintenanceHubDialog's nextDueMillis).
     val seasonMonth: Int? = null,
-    // At most one of these three is set — the specific inventory item/asset/system this
-    // task's completion status should be reflected against in the Inventory tab. Tasks
-    // with no natural single-item fit (smoke detectors, foundation, pest control, etc.)
-    // leave all three null and simply have no upkeep badge.
+    // At most one of these four is set — the specific inventory item/asset/system/custom
+    // appliance this task's completion status should be reflected against in the Inventory tab.
+    // Tasks with no natural single-item fit (smoke detectors, foundation, pest control, etc.)
+    // leave all four null and simply have no upkeep badge.
     val relatedRoomItem: RoomItem? = null,
     val relatedHiddenAsset: HiddenAsset? = null,
     val relatedHomeSystem: HomeSystem? = null,
+    // MaintenanceTarget.key (app module) — set only for tasks converted from a user-created
+    // CustomTask (see CustomTask.toMaintenanceTask below), never by anything HomeTaskList.forHome
+    // generates itself (this function has no DB access and knows nothing about user-created
+    // content). Identifies whichever target the task was attached to (any MaintenanceTarget
+    // variant, not just a CustomAppliance).
+    val relatedCustomTaskTarget: String? = null,
+    // Set only for tasks converted from a user-created CustomTask — lets the Tasks tab float
+    // user-added reminders to the top regardless of due date (see MaintenanceHubDialog.TasksTab).
+    val isCustom: Boolean = false,
+    /**
+     * MaintenanceTarget.key when this task belongs to ONE specific instance rather than a type —
+     * set for every per-vehicle task, since two cars in the same garage genuinely need different
+     * work depending on whether each is electric, and completing one car's oil change says
+     * nothing about the other's.
+     *
+     * When set it wins outright: tasksForTarget matches on this alone and ignores
+     * [relatedRoomItem], which stays populated so the hub's type-level sectioning and TaskScope's
+     * `relatedRoomItem in scope.items` check keep working unchanged.
+     *
+     * [key] embeds the same instance (see [vehicleTaskKey]), so each vehicle also gets its own
+     * task_records row rather than sharing one completion date with the rest of the fleet.
+     */
+    val relatedInstanceTarget: String? = null,
+)
+
+/**
+ * The task_records key for [baseKey] applied to one specific vehicle. Instance-scoped because
+ * task_records is keyed by [MaintenanceTask.key] alone — a shared key would make two cars share
+ * one completion date, which is exactly what per-vehicle tasks exist to stop. Saves written
+ * before this change hold rows under the bare [baseKey]; MainActivity's v7 migration re-keys
+ * those onto the first vehicle of each type so no completion history is lost.
+ */
+fun vehicleTaskKey(baseKey: String, vehicleId: String) = "$baseKey@placed:$vehicleId"
+
+// The user-authored counterpart to this file's built-in tasks — see CustomTask (core-model).
+// Priority is fixed (not user-exposed, keeps the add-task UI to just title + frequency); no
+// seasonMonth — the existing due-date machinery already treats a task with none as "recurring
+// every frequency.months from last completion," exactly like hvac_filter/smoke_co_test do.
+// A user task's MaintenanceTask.key is this prefix plus the CustomTask.id. UI that offers to
+// delete such a task has to recover the bare id to hand back (the delete handler takes the id,
+// not the task key), so the prefix is named here rather than spelled out at both ends.
+const val CUSTOM_TASK_KEY_PREFIX = "custom_task:"
+
+fun CustomTask.toMaintenanceTask() = MaintenanceTask(
+    key = "$CUSTOM_TASK_KEY_PREFIX$id",
+    title = title,
+    description = "",
+    frequency = frequency,
+    priority = TaskPriority.MEDIUM,
+    relatedCustomTaskTarget = targetKey,
+    isCustom = true,
 )
 
 enum class TaskFrequency(val months: Int, val displayName: String) {
@@ -51,19 +105,22 @@ object HomeTaskList {
         // HiddenAsset names) — any task whose relatedHiddenAsset was removed this way drops out
         // of the schedule entirely, since there's nothing left to maintain.
         removedInstances: Set<String> = emptySet(),
-        // True when at least one of that vehicle is parked on the lot (a matching
-        // PlacedItem exists) — gates the vehicle upkeep tasks the same way roomTypes
-        // gates appliance tasks.
-        hasCar: Boolean = false,
-        hasBoat: Boolean = false,
-        hasMotorcycle: Boolean = false,
-        // True when at least one car/motorcycle on the lot still runs on gas — gates the
-        // oil-change task for that vehicle type off once every one of them is electric.
-        hasGasCar: Boolean = false,
-        hasGasMotorcycle: Boolean = false,
+        // Every vehicle parked on the lot. Unlike every other category here, these generate
+        // tasks PER INSTANCE rather than per type: each car's task set depends on its own
+        // PlacedItem.electric flag, so a garage holding one gas car and one EV lists an oil
+        // change for the first and a battery/charging check for the second, and completing
+        // either says nothing about the other. See vehicleTaskKey.
+        vehicles: List<PlacedItem> = emptyList(),
         // True when at least one deck is placed — decks support multiple instances now,
         // tracked in their own list (placedDecks), not a single features slot.
         hasDeck: Boolean = false,
+        // True when at least one tree/gazebo of that kind is placed — same list-based
+        // treatment as hasDeck (placedYardDecor), not a features slot.
+        hasTrees: Boolean = false,
+        hasGazebo: Boolean = false,
+        // The home's RESOLVED attic (the caller applies the style default to a never-chosen null).
+        // Only ever widens what's scheduled — see the ATTIC block below and HiddenAsset.isApplicable.
+        atticType: AtticType = AtticType.FULL,
     ): List<MaintenanceTask> {
         val all = buildList {
 
@@ -147,17 +204,36 @@ object HomeTaskList {
         ))
 
         // ── HVAC ──────────────────────────────────────────────────────────────
+        // CONDO's system is a ductless mini-split (indoor unit + compact outdoor compressor,
+        // often balcony/rooftop-mounted) rather than a house-style ducted system — the two used
+        // to be tracked as separate cards (HomeSystem.HVAC plus a HiddenAsset.MINI_SPLIT_AC),
+        // which meant every CONDO home showed both at once. Now there's a single HVAC System
+        // card for every style; only the filter task's copy/frequency differs, since that's the
+        // one real day-to-day difference (mini-splits have small washable filters per indoor
+        // head, cleaned every few weeks, vs. a disposable filter in a central return, changed
+        // quarterly — no ducts to inspect either way, hence no separate duct task).
         if (HomeSystem.HVAC in systems) {
-            add(task(
-                key = "hvac_filter",
-                title = "Replace HVAC Filter",
-                description = "Replace with a MERV-8 or higher filter. Note the airflow direction arrow on the filter frame. Monthly replacement extends equipment life and improves air quality.",
-                frequency = TaskFrequency.QUARTERLY,
-                priority = TaskPriority.HIGH,
-                cost = 15f,
-                guideId = "hvac_no_cool",
-                system = HomeSystem.HVAC,
-            ))
+            if (style == HomeStyle.CONDO) {
+                add(task(
+                    key = "hvac_filter",
+                    title = "Clean Mini-Split Filters",
+                    description = "Slide out the washable filters from each indoor unit and rinse with warm water. Mini-splits have no ducted return-air filtration to fall back on, so dirty filters cut efficiency and airflow fast.",
+                    frequency = TaskFrequency.MONTHLY,
+                    priority = TaskPriority.MEDIUM,
+                    system = HomeSystem.HVAC,
+                ))
+            } else {
+                add(task(
+                    key = "hvac_filter",
+                    title = "Replace HVAC Filter",
+                    description = "Replace with a MERV-8 or higher filter. Note the airflow direction arrow on the filter frame. Monthly replacement extends equipment life and improves air quality.",
+                    frequency = TaskFrequency.QUARTERLY,
+                    priority = TaskPriority.HIGH,
+                    cost = 15f,
+                    guideId = "hvac_no_cool",
+                    system = HomeSystem.HVAC,
+                ))
+            }
             add(task(
                 key = "hvac_tune_up",
                 title = "HVAC Annual Professional Tune-Up",
@@ -189,6 +265,36 @@ object HomeTaskList {
             ))
         }
 
+        // ── ATTIC (ductwork + insulation) ─────────────────────────────────────
+        // Must agree with HiddenAsset.isApplicable, which documents the rule: pitched-roof styles
+        // have an attic by definition, CONDO's flat roof has no void and its ductless mini-split
+        // has no ducts to inspect — unless the owner says this condo does have a full attic, which
+        // is the one thing the attic choice is allowed to change here. Choosing a CLOSET never
+        // retires either task; that's what the attic pane's "not in my home" row is for.
+        if (style != HomeStyle.CONDO || atticType == AtticType.FULL) {
+            add(task(
+                key = "duct_inspect",
+                title = "Inspect Ductwork for Leaks",
+                description = "Check accessible duct runs in the attic for disconnected joints, crushed flex, and torn insulation. Seal leaking seams with mastic or foil tape — never cloth duct tape. Leaky ducts can waste 20–30% of conditioned air.",
+                frequency = TaskFrequency.ANNUAL,
+                priority = TaskPriority.MEDIUM,
+                cost = 40f,
+                guideId = "hvac_ducts",
+                seasonMonth = 2, // March
+                asset = HiddenAsset.DUCTWORK,
+            ))
+            add(task(
+                key = "attic_insulation",
+                title = "Check Attic Insulation & Ventilation",
+                description = "Confirm insulation is even and not compressed, and that soffit vents aren't blocked by batts. Look for dark streaks (air leaks) and damp spots. Most homes want R-38 to R-60 depending on climate.",
+                frequency = TaskFrequency.ANNUAL,
+                priority = TaskPriority.MEDIUM,
+                guideId = "roof_shingles",
+                seasonMonth = 9, // October, before heating season
+                asset = HiddenAsset.ATTIC_INSULATION,
+            ))
+        }
+
         // ── SOLAR ─────────────────────────────────────────────────────────────
         if (HomeSystem.SOLAR in systems) {
             add(task(
@@ -209,6 +315,28 @@ object HomeTaskList {
                 cost = 150f,
                 seasonMonth = 2, // March
                 system = HomeSystem.SOLAR,
+            ))
+        }
+
+        // ── EV BATTERY ────────────────────────────────────────────────────────
+        if (HomeSystem.EV_BATTERY in systems) {
+            add(task(
+                key = "ev_battery_health",
+                title = "Check EV Battery Health & Firmware",
+                description = "Review the battery's monitoring app for state-of-health and error codes. Install any pending firmware updates — manufacturers often patch charge-management bugs.",
+                frequency = TaskFrequency.QUARTERLY,
+                priority = TaskPriority.MEDIUM,
+                system = HomeSystem.EV_BATTERY,
+            ))
+            add(task(
+                key = "ev_battery_wiring",
+                title = "Inspect EV Battery Wiring & Mounting",
+                description = "Check the wall mount is still secure and the conduit/cabling shows no fraying, corrosion, or heat discoloration. Have a licensed electrician address any issues.",
+                frequency = TaskFrequency.ANNUAL,
+                priority = TaskPriority.HIGH,
+                cost = 100f,
+                seasonMonth = 2, // March
+                system = HomeSystem.EV_BATTERY,
             ))
         }
 
@@ -289,6 +417,32 @@ object HomeTaskList {
                 guideId = "ext_deck",
                 seasonMonth = 2, // March
                 asset = HiddenAsset.DECK,
+            ))
+        }
+
+        // ── TREES / GAZEBO ────────────────────────────────────────────────────
+        // No natural single-item fit (no matching HiddenAsset/RoomItem/HomeSystem) — these
+        // simply have no upkeep badge, same as smoke detectors/foundation/pest control.
+        if (hasTrees) {
+            add(task(
+                key = "trees_trim",
+                title = "Trim Trees & Check for Storm Damage",
+                description = "Remove dead or overhanging branches, especially any near the roof or power lines. Check trunks for cracks or fungal growth after storms.",
+                frequency = TaskFrequency.ANNUAL,
+                priority = TaskPriority.MEDIUM,
+                cost = 100f,
+                seasonMonth = 9, // October, before winter storms
+            ))
+        }
+        if (hasGazebo) {
+            add(task(
+                key = "gazebo_inspect",
+                title = "Inspect & Reseal Gazebo",
+                description = "Check posts and roof framing for rot or loose joints. Restain or reseal exposed wood when water no longer beads on the surface.",
+                frequency = TaskFrequency.ANNUAL,
+                priority = TaskPriority.MEDIUM,
+                cost = 100f,
+                seasonMonth = 2, // March
             ))
         }
 
@@ -388,94 +542,149 @@ object HomeTaskList {
             ))
         }
 
-        // ── Car ───────────────────────────────────────────────────────────────
-        if (hasCar) {
-            if (hasGasCar) add(task(
-                key = "car_oil",
-                title = "Car: Oil & Filter Change",
-                description = "Change the engine oil and filter every 5,000–7,500 miles (full synthetic can stretch longer — check the owner's manual). Reset the oil-life monitor and jot the mileage on the filter with a marker.",
-                frequency = TaskFrequency.BIANNUAL,
-                priority = TaskPriority.HIGH,
-                cost = 70f,
-                item = RoomItem.CAR,
-            ))
-            add(task(
-                key = "car_tires",
-                title = "Car: Rotate Tires & Check Pressure",
-                description = "Rotate tires front-to-back to even out wear and set pressures to the door-jamb sticker (not the number on the tire sidewall). Check tread depth with the penny test — if you can see all of Lincoln's head, replace.",
-                frequency = TaskFrequency.BIANNUAL,
-                priority = TaskPriority.MEDIUM,
-                cost = 40f,
-                item = RoomItem.CAR,
-            ))
-            add(task(
-                key = "car_fluids",
-                title = "Car: Check Battery & Fluids",
-                description = "Top up washer fluid; verify coolant and brake fluid sit between the reservoir marks (never open a hot coolant cap). Look for white/green corrosion on the battery terminals and brush it off — batteries last 3–5 years.",
-                frequency = TaskFrequency.QUARTERLY,
-                priority = TaskPriority.MEDIUM,
-                item = RoomItem.CAR,
-            ))
-            add(task(
-                key = "car_service",
-                title = "Car: Annual Service & Inspection",
-                description = "Book the yearly service: brake pads and rotors, alignment, engine and cabin air filters, wiper blades, and any state inspection or registration renewal that's due.",
-                frequency = TaskFrequency.ANNUAL,
-                priority = TaskPriority.HIGH,
-                cost = 250f,
-                seasonMonth = 2, // March
-                item = RoomItem.CAR,
-            ))
-        }
+        // ── Vehicles ──────────────────────────────────────────────────────────
+        // One task set per parked vehicle, keyed to that vehicle (vehicleTaskKey) so each owns
+        // its own completion history — and, for cars and motorcycles, chosen by that vehicle's
+        // OWN electric flag. Switching one car to electric swaps only that car's drivetrain
+        // tasks; the gas car beside it keeps its oil change. Everything shared by both
+        // drivetrains (tires, annual service) is listed once, outside the branch.
+        // Numbered per type only when the fleet holds more than one ("Car 1"/"Car 2", plain
+        // "Car" for a single one) — matching MainActivity's instancesByItem labelling, so a
+        // task title and its inventory row name the same vehicle. Without this, two cars would
+        // put two identical "Car: Rotate Tires" rows in the To-Do list with nothing to tell
+        // them apart. Indices follow the same order instancesByItem numbers in.
+        val vehicleLabels = vehicles.groupBy { it.item }.flatMap { (item, list) ->
+            list.mapIndexed { i, v ->
+                v.id to if (list.size > 1) "${item.label} ${i + 1}" else item.label
+            }
+        }.toMap()
 
-        // ── Boat ──────────────────────────────────────────────────────────────
-        if (hasBoat) {
-            add(task(
-                key = "boat_winterize",
-                title = "Boat: Winterize & Cover",
-                description = "Before the first freeze: drain the water systems and lower unit, stabilize the fuel and run it through, fog the engine cylinders, pull the battery onto a tender, and strap the cover down tight enough to shed snow.",
-                frequency = TaskFrequency.ANNUAL,
-                priority = TaskPriority.HIGH,
-                cost = 150f,
-                seasonMonth = 9, // October
-                item = RoomItem.BOAT,
-            ))
-            add(task(
-                key = "boat_hull",
-                title = "Boat: Hull, Trailer & Safety Check",
-                description = "Spring launch prep: inspect the hull for blisters and gelcoat cracks, check the prop for dings, grease the trailer wheel bearings and test its lights, and confirm flares, extinguisher, and life jackets haven't expired.",
-                frequency = TaskFrequency.ANNUAL,
-                priority = TaskPriority.MEDIUM,
-                cost = 80f,
-                seasonMonth = 3, // April
-                item = RoomItem.BOAT,
-            ))
-        }
+        vehicles.forEach { v ->
+            val instance = "placed:${v.id}"
+            val who = vehicleLabels[v.id] ?: v.item.label
+            fun vTask(
+                key: String, what: String, description: String, frequency: TaskFrequency,
+                priority: TaskPriority, cost: Float = 0f, seasonMonth: Int? = null,
+            ) = add(task(
+                key = vehicleTaskKey(key, v.id),
+                title = "$who: $what", description = description, frequency = frequency,
+                priority = priority, cost = cost, seasonMonth = seasonMonth,
+                item = v.item,
+            ).copy(relatedInstanceTarget = instance))
 
-        // ── Motorcycle ────────────────────────────────────────────────────────
-        if (hasMotorcycle) {
-            if (hasGasMotorcycle) add(task(
-                key = "moto_oil_chain",
-                title = "Motorcycle: Oil & Chain Service",
-                description = "Change the oil and filter every 3,000–5,000 miles, then clean, lube, and tension the chain (check slack with the bike on its stand — about 1–1.5 inches of play). A dry or sagging chain wears sprockets fast.",
-                frequency = TaskFrequency.BIANNUAL,
-                priority = TaskPriority.HIGH,
-                cost = 60f,
-                item = RoomItem.MOTORCYCLE,
-            ))
-            add(task(
-                key = "moto_season",
-                title = "Motorcycle: Season Prep & Inspection",
-                description = "Riding-season checkup: charge or replace the battery after winter storage (a tender prevents this), check tire pressure and date codes (rubber ages out around 5–6 years), bleed brakes if the fluid is dark, and renew inspection/registration.",
-                frequency = TaskFrequency.ANNUAL,
-                priority = TaskPriority.MEDIUM,
-                cost = 100f,
-                seasonMonth = 2, // March
-                item = RoomItem.MOTORCYCLE,
-            ))
+            when (v.item) {
+                RoomItem.CAR -> {
+                    if (v.electric) {
+                        vTask(
+                            key = "car_ev_battery",
+                            what = "EV Battery & Charging Check",
+                            description = "Check the battery's state of health in the car's app or service menu and note the figure so you can see the trend year on year. Keep the daily charge limit near 80% and only fill to 100% before a long trip. Inspect the charge port and cable for cracked insulation, bent pins, or heat discolouration around the contacts — a warm plug during charging means stop and get it looked at.",
+                            frequency = TaskFrequency.BIANNUAL,
+                            priority = TaskPriority.HIGH,
+                        )
+                        vTask(
+                            key = "car_ev_brakes",
+                            what = "Brake Fluid & Caliper Service",
+                            description = "Regenerative braking means the pads barely wear, which is its own problem: calipers seize and rotors corrode from disuse, and the fluid still absorbs moisture on the same schedule as any car. Have the calipers cleaned and lubricated and the fluid tested — most makers still want it changed every 2–3 years regardless of mileage.",
+                            frequency = TaskFrequency.ANNUAL,
+                            priority = TaskPriority.MEDIUM,
+                            cost = 120f,
+                            seasonMonth = 4, // May
+                        )
+                    } else {
+                        vTask(
+                            key = "car_oil",
+                            what = "Oil & Filter Change",
+                            description = "Change the engine oil and filter every 5,000–7,500 miles (full synthetic can stretch longer — check the owner's manual). Reset the oil-life monitor and jot the mileage on the filter with a marker.",
+                            frequency = TaskFrequency.BIANNUAL,
+                            priority = TaskPriority.HIGH,
+                            cost = 70f,
+                        )
+                        vTask(
+                            key = "car_fluids",
+                            what = "Check Battery & Fluids",
+                            description = "Top up washer fluid; verify coolant and brake fluid sit between the reservoir marks (never open a hot coolant cap). Look for white/green corrosion on the battery terminals and brush it off — batteries last 3–5 years.",
+                            frequency = TaskFrequency.QUARTERLY,
+                            priority = TaskPriority.MEDIUM,
+                        )
+                    }
+                    vTask(
+                        key = "car_tires",
+                        what = "Rotate Tires & Check Pressure",
+                        description = "Rotate tires front-to-back to even out wear and set pressures to the door-jamb sticker (not the number on the tire sidewall). Check tread depth with the penny test — if you can see all of Lincoln's head, replace.",
+                        frequency = TaskFrequency.BIANNUAL,
+                        priority = TaskPriority.MEDIUM,
+                        cost = 40f,
+                    )
+                    vTask(
+                        key = "car_service",
+                        what = "Annual Service & Inspection",
+                        description = "Book the yearly service: brake pads and rotors, alignment, cabin air filter, wiper blades, and any state inspection or registration renewal that's due.",
+                        frequency = TaskFrequency.ANNUAL,
+                        priority = TaskPriority.HIGH,
+                        cost = 250f,
+                        seasonMonth = 2, // March
+                    )
+                }
+
+                RoomItem.MOTORCYCLE -> {
+                    if (v.electric) {
+                        vTask(
+                            key = "moto_ev_battery",
+                            what = "Battery & Belt Check",
+                            description = "Check the pack's state of health and keep it off the charger at 100% during storage — sitting full and hot is what ages cells. Electric bikes run a belt instead of a chain, so there's nothing to lube: check the belt for cracks or missing teeth and confirm the tension against the manual.",
+                            frequency = TaskFrequency.BIANNUAL,
+                            priority = TaskPriority.HIGH,
+                        )
+                    } else {
+                        vTask(
+                            key = "moto_oil_chain",
+                            what = "Oil & Chain Service",
+                            description = "Change the oil and filter every 3,000–5,000 miles, then clean, lube, and tension the chain (check slack with the bike on its stand — about 1–1.5 inches of play). A dry or sagging chain wears sprockets fast.",
+                            frequency = TaskFrequency.BIANNUAL,
+                            priority = TaskPriority.HIGH,
+                            cost = 60f,
+                        )
+                    }
+                    vTask(
+                        key = "moto_season",
+                        what = "Season Prep & Inspection",
+                        description = "Riding-season checkup: charge or replace the battery after winter storage (a tender prevents this), check tire pressure and date codes (rubber ages out around 5–6 years), bleed brakes if the fluid is dark, and renew inspection/registration.",
+                        frequency = TaskFrequency.ANNUAL,
+                        priority = TaskPriority.MEDIUM,
+                        cost = 100f,
+                        seasonMonth = 2, // March
+                    )
+                }
+
+                RoomItem.BOAT -> {
+                    vTask(
+                        key = "boat_winterize",
+                        what = "Winterize & Cover",
+                        description = "Before the first freeze: drain the water systems and lower unit, stabilize the fuel and run it through, fog the engine cylinders, pull the battery onto a tender, and strap the cover down tight enough to shed snow.",
+                        frequency = TaskFrequency.ANNUAL,
+                        priority = TaskPriority.HIGH,
+                        cost = 150f,
+                        seasonMonth = 9, // October
+                    )
+                    vTask(
+                        key = "boat_hull",
+                        what = "Hull, Trailer & Safety Check",
+                        description = "Spring launch prep: inspect the hull for blisters and gelcoat cracks, check the prop for dings, grease the trailer wheel bearings and test its lights, and confirm flares, extinguisher, and life jackets haven't expired.",
+                        frequency = TaskFrequency.ANNUAL,
+                        priority = TaskPriority.MEDIUM,
+                        cost = 80f,
+                        seasonMonth = 3, // April
+                    )
+                }
+
+                else -> Unit // not a vehicle; nothing to schedule
+            }
         }
         }
-        return all.filterNot { it.relatedHiddenAsset?.name in removedInstances }
+        return all.filterNot {
+            it.relatedHiddenAsset?.name in removedInstances || it.relatedHomeSystem?.name in removedInstances
+        }
     }
 
     private fun task(

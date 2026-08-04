@@ -8,7 +8,9 @@ import com.homehealth.model.*
 import com.homehealth.renderspec.FloorPlanBoxNode
 import com.homehealth.renderspec.FloorPlanMaterialSlot
 import com.homehealth.renderspec.FloorPlanSceneGeometry
+import com.homehealth.renderspec.CarLotGeometry
 import com.homehealth.renderspec.HouseSceneGeometry
+import com.homehealth.renderspec.RoomPalette
 import com.homehealth.scene.FLOOR_HEIGHT_M
 import com.homehealth.scene.ITEM_SCALE_REFERENCE
 import com.homehealth.scene.WALL_T
@@ -16,7 +18,6 @@ import io.github.sceneview.SceneScope
 import io.github.sceneview.math.Position
 import io.github.sceneview.math.Size
 import io.github.sceneview.math.colorOf
-import io.github.sceneview.node.CubeNode as CubeNodeImpl
 
 // ── Floor-plan view ───────────────────────────────────────────────────────────
 // Camera positioned above, looking straight down — no roof rendered.
@@ -36,6 +37,9 @@ fun SceneScope.FloorPlanScene(
     currentFloor: Int = 0,
     homeStyle: HomeStyle = HomeStyle.HOUSE,
     featurePlacements: Map<HomeFeature, FeatureSide> = emptyMap(),
+    // Only the parked fleet reads these: the driveway is anchored on the garage, so a garage
+    // dragged along its wall in the exterior moves the cars here too (see CarLotGeometry.homeLot).
+    featureOffsets: Map<HomeFeature, Pair<Float, Float>> = emptyMap(),
     placedDecks: List<PlacedDeck> = emptyList(),
     removedInstances: Set<String> = emptySet(),
     itemOffsets: Map<RoomItem, Pair<Float, Float>> = emptyMap(),
@@ -51,36 +55,23 @@ fun SceneScope.FloorPlanScene(
     val w = layout.totalW
     val d = layout.totalD
     val pwz = layout.toPlacementsAndZones(currentFloor)
-    // TOWNHOUSE's interior garage room, real-world positioned — same source of truth the 3D
+    // Any style's interior garage room, real-world positioned — same source of truth the 3D
     // exterior view reads (HouseSceneGeometry.townhouseGarageBox) so the door mark drawn on
-    // the wall below lines up with the actual 3D door exactly.
-    val townhouseGarageBox = if (homeStyle == HomeStyle.TOWNHOUSE)
-        HouseSceneGeometry.townhouseGarageBox(layout) else null
+    // the wall below lines up with the actual 3D door exactly. That function already returns
+    // null when the layout has no GARAGE room, so no style check is needed here.
+    val townhouseGarageBox = HouseSceneGeometry.townhouseGarageBox(layout)
 
     val slabMat      = remember { materialLoader.createColorInstance(colorOf(0.72f, 0.70f, 0.67f)) }
     val outerWallMat = remember { materialLoader.createColorInstance(colorOf(0.95f, 0.92f, 0.82f)) }
     val innerWallMat = remember { materialLoader.createColorInstance(colorOf(0.80f, 0.78f, 0.72f)) }
     val emptyCellMat = remember { materialLoader.createColorInstance(colorOf(0.86f, 0.84f, 0.82f)) }
     val selectedCellMat = remember { materialLoader.createColorInstance(colorOf(0.45f, 0.75f, 0.55f)) }
+    // Shared palette (see RoomPalette) — the same colour this room's floor gets from inside it
+    // and in another room's backdrop.
     val roomFloorMats = remember {
-        mapOf(
-            RoomType.LIVING_ROOM  to materialLoader.createColorInstance(colorOf(0.96f, 0.86f, 0.66f)),
-            RoomType.KITCHEN      to materialLoader.createColorInstance(colorOf(0.76f, 0.93f, 0.70f)),
-            RoomType.DINING_ROOM  to materialLoader.createColorInstance(colorOf(0.96f, 0.82f, 0.66f)),
-            RoomType.HALLWAY      to materialLoader.createColorInstance(colorOf(0.83f, 0.83f, 0.83f)),
-            RoomType.FOYER        to materialLoader.createColorInstance(colorOf(0.94f, 0.91f, 0.84f)),
-            RoomType.STAIRCASE    to materialLoader.createColorInstance(colorOf(0.70f, 0.70f, 0.72f)),
-            RoomType.BEDROOM      to materialLoader.createColorInstance(colorOf(0.82f, 0.72f, 0.96f)),
-            RoomType.BATHROOM     to materialLoader.createColorInstance(colorOf(0.68f, 0.85f, 0.96f)),
-            RoomType.LAUNDRY      to materialLoader.createColorInstance(colorOf(0.80f, 0.88f, 0.92f)),
-            RoomType.OFFICE       to materialLoader.createColorInstance(colorOf(0.72f, 0.82f, 0.88f)),
-            RoomType.PANTRY       to materialLoader.createColorInstance(colorOf(0.95f, 0.93f, 0.75f)),
-            RoomType.STORAGE      to materialLoader.createColorInstance(colorOf(0.75f, 0.75f, 0.73f)),
-            RoomType.GYM          to materialLoader.createColorInstance(colorOf(0.78f, 0.90f, 0.76f)),
-            RoomType.HOME_THEATER to materialLoader.createColorInstance(colorOf(0.25f, 0.25f, 0.28f)),
-            RoomType.POWDER_ROOM  to materialLoader.createColorInstance(colorOf(0.78f, 0.90f, 0.96f)),
-            RoomType.GARAGE       to materialLoader.createColorInstance(colorOf(0.62f, 0.60f, 0.56f)),
-        )
+        RoomType.entries.associateWith { type ->
+            RoomPalette.floor(type).let { materialLoader.createColorInstance(colorOf(it.r, it.g, it.b)) }
+        }
     }
     val sofaMat         = remember { materialLoader.createColorInstance(colorOf(0.82f, 0.72f, 0.58f)) }
     val woodItemMat     = remember { materialLoader.createColorInstance(colorOf(0.55f, 0.35f, 0.18f)) }
@@ -225,6 +216,41 @@ fun SceneScope.FloorPlanScene(
         FeatureSide.RIGHT -> bestWallRoom(layout.rooms.filter { it.floor == currentFloor && it.col + it.colSpan == layout.gridCols })
             ?.let { (zBound[it.row] + zBound[it.row + it.rowSpan]) / 2f } ?: hwCz
         else -> hwCz
+    }
+
+    // ── The world around the plan ─────────────────────────────────────────────
+    // Same street the exterior and the room views stand on (see NeighborhoodBackdrop), dropped by
+    // the storey being shown — the plan always draws the active floor at y ≈ 0, so the lift is
+    // what makes an upper storey look DOWN on the neighbourhood. The extra 5 cm keeps the world's
+    // ground (top −0.07) clear of the slab's underside (−0.10) rather than intersecting it.
+    // Untouchable, so it can never swallow a tap meant for a tile, a wall or a room.
+    NeighborhoodBackdrop(
+        floorLayout       = layout,
+        featurePlacements = featurePlacements,
+        offset            = Position(0f, -(currentFloor * FLOOR_HEIGHT_M + 0.05f), 0f),
+    )
+
+    // The parked fleet, on the same world lot every other scene draws it on — so the plan shows
+    // where the cars actually are rather than pretending the home has none. Scenery: vehicles
+    // are managed from the driveway (see DrivewayLot), and an untouchable copy can't swallow a
+    // tap meant for a room tile or a wall.
+    val planVehicles = placedItems.filter { it.item.isVehicle }
+    if (planVehicles.isNotEmpty()) {
+        VehiclesOnLot(
+            lot              = CarLotGeometry.homeLot(
+                layout, featurePlacements, featureOffsets, planVehicles.map { it.item }),
+            vehicles         = planVehicles,
+            doorFraction     = 0f,
+            garagePresent    = HouseSceneGeometry.townhouseGarageBox(layout) != null ||
+                               featurePlacements[HomeFeature.GARAGE] != null,
+            movable          = false,
+            interactive      = false,
+            // Down with the world when an upper storey is shown, so the cars stay on the ground.
+            yOffset          = -(currentFloor * FLOOR_HEIGHT_M),
+            onVehicleTap     = {},
+            onVehicleMoved   = { _, _ -> },
+            onVehicleRemoved = {},
+        )
     }
 
     // ── Ground slab ───────────────────────────────────────────────────────────

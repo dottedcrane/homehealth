@@ -1,6 +1,6 @@
 package com.homehealth.model
 
-import com.homehealth.util.randomUUIDString
+import java.util.UUID
 
 // A user-placed deck instance — unlike garage/pool (one slot each, in featurePlacements),
 // decks support multiple copies, added via tear-drag from the sidebar tray just like
@@ -8,7 +8,7 @@ import com.homehealth.util.randomUUIDString
 // [along] is its position along that wall (world X for FRONT/BACK, world Z for LEFT/RIGHT),
 // relative to the wall's own centre — see HouseSceneGeometry.deckBox.
 data class PlacedDeck(
-    val id: String = randomUUIDString(),
+    val id: String = UUID.randomUUID().toString(),
     val side: FeatureSide,
     val along: Float = 0f,
 )

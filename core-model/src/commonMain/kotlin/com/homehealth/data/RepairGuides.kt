@@ -786,4 +786,11 @@ object RepairGuides {
     )
 
     val byCategory: Map<GuideCategory, List<RepairGuide>> = all.groupBy { it.category }
+
+    private val byIdMap: Map<String, RepairGuide> = all.associateBy { it.id }
+
+    /** Resolves a [MaintenanceTask.repairGuideId] to its guide, or null when the task has none
+     *  (most don't) or the id no longer matches a shipped guide. Callers should treat null as
+     *  "offer no guide affordance" rather than an error. */
+    fun byId(id: String?): RepairGuide? = id?.let { byIdMap[it] }
 }
